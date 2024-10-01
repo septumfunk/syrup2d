@@ -37,17 +37,6 @@ void window_init(char *title, uint16_t width, uint16_t height) {
     // Callbacks
     glfwSetErrorCallback(display_glfw_error);
 
-    const GLFWvidmode *vmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-    if (!vmode) {
-        msgbox_error("OpenGL Error", "Failed to get GLFW videomode.");
-        game_end();
-    }
-    glfwSetWindowPos(
-        window->_handle,
-        (vmode->width - height) / 2,
-        (vmode->height - width) / 2
-    );
-
     glfwMakeContextCurrent(window->_handle);
     if (!gladLoadGL()) {
         msgbox_error("OpenGL Error", "Failed to get initialize GLAD.");
@@ -77,12 +66,12 @@ bool window_loop(void) {
     return !glfwWindowShouldClose(window->_handle);
 }
 
-void window_twap(void) {
+void window_swap(void) {
     glfwSwapBuffers(window->_handle);
     glfwPollEvents();
 }
 
-void window_tet_title(char *title) {
+void window_set_title(char *title) {
     strcpy(window->title, title);
     glfwSetWindowTitle(window->_handle, title);
 }
@@ -92,7 +81,7 @@ void window_resize(vec2 dimensions) {
     glViewport(0, 0, dimensions[0], dimensions[1]);
 }
 
-void window_tet_clear_color(color_t color) {
+void window_set_clear_color(color_t color) {
     window->_clear_color = color_to_gl(color);
 }
 

@@ -24,6 +24,6 @@ void game_loop(void) {
         }
 
         controller_reset();
-        window_twap();
+        window_swap();
     }
 }

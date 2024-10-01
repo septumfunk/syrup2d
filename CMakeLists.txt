@@ -9,39 +9,24 @@ project(
 )
 
 # Sources
-add_executable(${PROJECT_NAME}
-    src/main.c
-
-    src/data/fs.c
-    src/data/stringext.c
-    src/data/vector.c
-
-    src/game/game.c
-
-    src/graphics/opengl.c
-    src/graphics/color.c
-    src/graphics/shader.c
-
-    src/systems/window.c
-    src/systems/controller.c
-
-    src/win32/msgbox.c
-)
+file(GLOB_RECURSE SOURCES src/*.c)
+add_executable(${PROJECT_NAME} ${SOURCES})
 
 # Libraries
-find_package(cglm CONFIG REQUIRED)
-find_package(glad CONFIG REQUIRED)
-find_package(glfw3 CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE
-    cglm::cglm
-    glad::glad
-    glfw
+    ${CMAKE_SOURCE_DIR}/dependencies/cglm/lib/cglm.lib
+    ${CMAKE_SOURCE_DIR}/dependencies/glad/lib/glad.lib
+    ${CMAKE_SOURCE_DIR}/dependencies/glfw3/lib/glfw3.lib
+)
+target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE
+    ${CMAKE_SOURCE_DIR}/dependencies/cglm/include
+    ${CMAKE_SOURCE_DIR}/dependencies/glad/include
+    ${CMAKE_SOURCE_DIR}/dependencies/glfw3/include
 )
 
 # Compile Options
 target_compile_options(${PROJECT_NAME} PRIVATE
     -Wall
     -Wextra
-    -Wpedantic
 )
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)

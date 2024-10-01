@@ -19,11 +19,11 @@ void window_init(char *title, uint16_t width, uint16_t height);
 void window_cleanup(void);
 
 bool window_loop(void);
-void window_twap(void);
+void window_swap(void);
 
-void window_tet_title(char *title);
+void window_set_title(char *title);
 void window_resize(vec2 dimensions);
-void window_tet_clear_color(color_t color);
+void window_set_clear_color(color_t color);
 
 void _window_resize_callback(unused GLFWwindow *handle, int width, int height);
 
