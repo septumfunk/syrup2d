@@ -1,0 +1,11 @@
+CompileFlags:
+    CompilationDatabase: build/
+    Add: [
+        -std=c99,
+        -xc,
+    ]
+    Compiler: clang
+---
+Diagnostics:
+    # Due to a bug in clangd intellisense always thinks pragma pack is unterminated.
+    Suppress: pragma-pack

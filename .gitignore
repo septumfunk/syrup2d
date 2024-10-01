@@ -1,0 +1,4 @@
+build
+.cache
+*.exe
+vcpkg_installed
