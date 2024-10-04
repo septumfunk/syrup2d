@@ -22,6 +22,7 @@ target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE
     ${CMAKE_SOURCE_DIR}/dependencies/cglm/include
     ${CMAKE_SOURCE_DIR}/dependencies/glad/include
     ${CMAKE_SOURCE_DIR}/dependencies/glfw3/include
+    ${CMAKE_SOURCE_DIR}/dependencies/stb/include
 )
 
 # Compile Options
