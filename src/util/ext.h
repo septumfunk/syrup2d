@@ -1,7 +1,5 @@
-// septumfunk 2024
-#ifndef EXT_H
-#define EXT_H
+//? septumfunk 2024
+#pragma once
 
+/// Mark a parameter as unused, e.g. `unused int width`
 #define unused __attribute__((unused))
-
-#endif // EXT_H

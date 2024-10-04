@@ -1,10 +1,8 @@
-// septumfunk 2024
-
+//? septumfunk 2024
 #include "shader.h"
 #include "../data/stringext.h"
 #include "../data/fs.h"
 #include "../win32/msgbox.h"
-#include "opengl.h"
 
 GLuint load_shader_file(int type, const char *name) {
     GLuint shader = glCreateShader(type);

@@ -1,4 +1,4 @@
-// septumfunk 2024
+//? septumfunk 2024
 #include "vector.h"
 #include <stdio.h>
 #include <stdlib.h>

@@ -1,5 +1,4 @@
-// septumfunk 2024
-
+//? septumfunk 2024
 #include "game.h"
 #include "../systems/controller.h"
 #include "../systems/window.h"

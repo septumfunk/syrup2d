@@ -1,3 +1,4 @@
+//? septumfunk 2024
 #include "window.h"
 #include "../game/game.h"
 #include "../win32/msgbox.h"
@@ -35,7 +36,7 @@ void window_init(char *title, uint16_t width, uint16_t height) {
     }
 
     // Callbacks
-    glfwSetErrorCallback(display_glfw_error);
+    glfwSetErrorCallback(_window_error_cb);
 
     glfwMakeContextCurrent(window->_handle);
     if (!gladLoadGL()) {
@@ -76,17 +77,22 @@ void window_set_title(char *title) {
     glfwSetWindowTitle(window->_handle, title);
 }
 
-void window_resize(vec2 dimensions) {
-    memcpy(window->dimensions, dimensions, sizeof(vec2));
-    glViewport(0, 0, dimensions[0], dimensions[1]);
+void window_resize(uint16_t width, uint16_t height) {
+    window->dimensions[0] = width;
+    window->dimensions[1] = height;
+    glViewport(0, 0, width, height);
 }
 
 void window_set_clear_color(color_t color) {
     window->_clear_color = color_to_gl(color);
 }
 
-void _window_resize_callback(unused GLFWwindow *handle, int width, int height) {
+void _window_resize_cb(unused GLFWwindow *handle, int width, int height) {
     glViewport(0, 0, width, height);
     window->dimensions[0] = width;
     window->dimensions[1] = height;
+}
+
+void _window_err_cb(int error_code, const char* description) {
+    msgbox_error("OpenGL Error", "OpenGL Error:\n%s\n\nError Code: %d", description, error_code);
 }

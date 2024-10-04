@@ -1,5 +1,5 @@
-#ifndef VECTOR_H
-#define VECTOR_H
+//? septumfunk 2024
+#pragma once
 
 /// Simple generic-esque vector implementation.
 typedef struct vector_t {
@@ -24,5 +24,3 @@ void *vector_push(vector_t *vector, void *data);
 
 /// Removes a vector element at the specified index.
 void vector_remove(vector_t *vector, unsigned int index);
-
-#endif // VECTOR_H

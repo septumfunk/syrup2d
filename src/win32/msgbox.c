@@ -1,12 +1,11 @@
+//? septumfunk 2024
+#include "msgbox.h"
 #include <stdio.h>
 #include <stdlib.h>
-
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
 #include <windows.h>
-
-#include "msgbox.h"
 
 void msgbox_info(const char *title, const char *format, ...) {
     va_list arglist;

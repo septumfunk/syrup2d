@@ -1,18 +1,19 @@
-// septumfunk 2024
-#ifndef CONTROLLER_H
-#define CONTROLLER_H
-
+//? septumfunk 2024
+#pragma once
 #include "../util/ext.h"
 #include "../graphics/opengl.h"
 
 #define KEY_COUNT 349
 
+/// Controller input system
 typedef struct controller_t {
     bool enabled;
     bool keys_pressed[KEY_COUNT];
 } controller_t;
+/// Controller system's main instance
 extern controller_t *controller;
 
+/// Keyboard mapping enum
 typedef enum key {
     KEY_UNKNOWN = GLFW_KEY_UNKNOWN,
     KEY_SPACE = GLFW_KEY_SPACE,
@@ -137,22 +138,17 @@ typedef enum key {
     KEY_MENU = GLFW_KEY_MENU,
 } key;
 
-// Initialize controller
+/// Initialize controller
 void controller_init(void);
-
-// Clean up controller
+/// Clean up controller
 void controller_cleanup(void);
-
 /// Resets all keys. Call this at the end of every frame before polling events.
 void controller_reset(void);
 
-/// Default GLFW keyboard callback. Sets keys_pressed.
-void glfw_keyboard_callback(unused GLFWwindow* handle, int key, unused int scancode, int action, unused int mods);
-
 /// Checks if key has been pressed this frame.
 bool is_key_pressed(key key);
-
 /// Checks if key is currently held down.
 bool is_key_down(key key);
 
-#endif // CONTROLLER_H
+/// Default GLFW keyboard callback. Sets keys_pressed.
+void _controller_keyboard_cb(unused GLFWwindow* handle, int key, unused int scancode, int action, unused int mods);
