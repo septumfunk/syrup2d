@@ -9,14 +9,32 @@ project(
 )
 
 # Sources
-file(GLOB_RECURSE SOURCES src/*.c)
-add_executable(${PROJECT_NAME} ${SOURCES})
+add_executable(${PROJECT_NAME}
+    src/main.c
+
+    src/game/game.c
+
+    src/data/fs.c
+    src/data/stringext.c
+    src/data/vector.c
+
+    src/graphics/shader.c
+    src/graphics/color.c
+    src/graphics/sprite.c
+
+    src/systems/controller.c
+    src/systems/shaders.c
+    src/systems/window.c
+
+    src/win32/msgbox.c
+)
 
 # Libraries
 target_link_libraries(${PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/dependencies/cglm/lib/cglm.lib
     ${CMAKE_SOURCE_DIR}/dependencies/glad/lib/glad.lib
     ${CMAKE_SOURCE_DIR}/dependencies/glfw3/lib/glfw3.lib
+    ${CMAKE_SOURCE_DIR}/dependencies/stb/lib/stb.lib
 )
 target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE
     ${CMAKE_SOURCE_DIR}/dependencies/cglm/include

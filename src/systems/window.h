@@ -1,4 +1,4 @@
-//? septumfunk 2024
+// septumfunk 2024
 #pragma once
 #include "../util/ext.h"
 #include "../graphics/color.h"

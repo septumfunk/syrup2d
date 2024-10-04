@@ -38,12 +38,20 @@ void window_init(char *title, uint16_t width, uint16_t height) {
     // Callbacks
     glfwSetErrorCallback(_window_error_cb);
 
+    // Load GLAD
     glfwMakeContextCurrent(window->_handle);
     if (!gladLoadGL()) {
         msgbox_error("OpenGL Error", "Failed to get initialize GLAD.");
         game_end();
     }
 
+    // Texture options
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    // Ready
     glfwSwapInterval(0); // Disable V-Sync
     glfwShowWindow(window->_handle);
 }
@@ -93,6 +101,6 @@ void _window_resize_cb(unused GLFWwindow *handle, int width, int height) {
     window->dimensions[1] = height;
 }
 
-void _window_err_cb(int error_code, const char* description) {
+void _window_error_cb(int error_code, const char* description) {
     msgbox_error("OpenGL Error", "OpenGL Error:\n%s\n\nError Code: %d", description, error_code);
 }
