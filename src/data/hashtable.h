@@ -38,16 +38,21 @@ typedef struct hashtable_t {
 hashtable_t hashtable_create();
 /// Clean up after a hashtable
 void hashtable_delete(hashtable_t *this);
+/// Reset a hash table
+void hashtable_reset(hashtable_t *this);
 
 /// Insert a key/pair value into a hashtable
 void hashtable_insert(hashtable_t *this, const char *key, void *value, uint32_t size);
 /// Get a value from a hashtable
 /// Returns null if not found
 void *hashtable_get(hashtable_t *this, const char *key);
+/// Get a pair from a hashtable
+/// Returns null if not found
+pair_t *hashtable_get_pair(hashtable_t *this, const char *key);
 /// Remove a key from a hashtable
 void hashtable_remove(hashtable_t *this, const char *key);
 /// Calculate the load of a hashtable
-double hashtable_calculate_load(hashtable_t *this);
+double hashtable_calculate_load(hashtable_t *this, uint64_t count);
 /// Rehash a hashtable, reorganizing its elements
 /// Probably should only be used internally
 void hashtable_rehash(hashtable_t *this, uint64_t count);

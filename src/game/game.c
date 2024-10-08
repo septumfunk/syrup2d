@@ -1,6 +1,8 @@
 //? septumfunk 2024
 #include "game.h"
 #include "../graphics/sprite.h"
+#include "../data/hashtable.h"
+#include "../data/stringext.h"
 #include "../win32/msgbox.h"
 #include "../systems/window.h"
 #include "../systems/shaders.h"
@@ -20,11 +22,6 @@ void game_end(void) {
 }
 
 void game_loop(void) {
-    sprite_t vap;
-    if (sprite_from_image(&vap, "assets/sprites/vap.png") != SPRITE_ERR_NONE) {
-        msgbox_error("Failed to load vaporeon", "Just kill yourself already. There's no reason in continuing to live if there's no vaporeon.");
-        game_end();
-    }
     float x = 0, y = 0;
     while (window_loop()) {
         if (is_key_pressed(KEY_ESCAPE)) {
@@ -37,7 +34,7 @@ void game_loop(void) {
         if (is_key_down(KEY_S)) y += 0.05;
         if (is_key_down(KEY_W)) y -= 0.05;
 
-        sprite_draw(&vap, x, y, 0);
+        sprite_draw(hashtable_get(&table, "vap"), x, y, 0);
 
         controller_reset();
         window_swap();

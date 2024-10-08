@@ -12,6 +12,9 @@ typedef struct window_t {
 
     gl_color_t _clear_color;
     mat4 ortho;
+
+    double _last_time;
+    double delta_time;
 } window_t;
 /// Window system main instance
 extern window_t *window;

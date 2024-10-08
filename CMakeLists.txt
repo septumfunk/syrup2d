@@ -17,6 +17,7 @@ add_executable(${PROJECT_NAME}
     src/data/fs.c
     src/data/stringext.c
     src/data/vector.c
+    src/data/hashtable.c
 
     src/graphics/shader.c
     src/graphics/color.c

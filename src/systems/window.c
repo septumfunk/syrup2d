@@ -5,6 +5,7 @@
 #include "../util/ext.h"
 #include <GLFW/glfw3.h>
 #include <cglm/cam.h>
+#include <stdlib.h>
 #include <glad/glad.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -57,9 +58,11 @@ void window_init(char *title, uint16_t width, uint16_t height) {
     // Ortho
     glm_ortho(0, width, height, 0, -1, 1, (vec4 *)&window->ortho);
 
+    // Deltatime
+    window->_last_time = clock();
+
     // Ready
     glViewport(0, 0, width, height);
-    glfwSwapInterval(0); // Disable V-Sync
     glfwShowWindow(window->_handle);
 }
 

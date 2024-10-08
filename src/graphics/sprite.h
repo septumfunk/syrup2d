@@ -4,6 +4,7 @@
 
 #define SPRITE_PATH "assets/sprites/%s.mspr"
 #define SPRITE_VERSION 1.0f
+#define SPRITE_DECAY_TIME 5
 
 /// Inner sprite data that gets written and read from disk
 typedef struct spritedata_t {
@@ -20,6 +21,9 @@ typedef struct sprite_t {
     int frame;
     int depth;
     struct spritedata_t data;
+
+    uint64_t ref_counter;
+    uint16_t timeout;
 } sprite_t;
 
 /// Sprite errors enum
