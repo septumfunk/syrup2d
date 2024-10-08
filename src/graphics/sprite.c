@@ -38,12 +38,12 @@ void sprite_draw(sprite_t *this, int x, int y, int depth) {
     float verts[] = {
         // Positions         // Tex Coords
         x, y, depth,        0.0f, 0.0f, // Top Left
-        x + this->width, y, depth,      1.0f, 0.0f, // Top Right
-        x, y + this->height, depth,     0.0f, 1.0f, // Bottom Left
+        x + this->data.width, y, depth,      1.0f, 0.0f, // Top Right
+        x, y + this->data.height, depth,     0.0f, 1.0f, // Bottom Left
 
-        x + this->width, y + this->height, depth, 1.0f, 1.0f, // Bottom Right
-        x + this->width, y, depth,      1.0f, 0.0f, // Top Right
-        x, y + this->height, depth,     0.0f, 1.0f  // Bottom Left
+        x + this->data.width, y + this->data.height, depth, 1.0f, 1.0f, // Bottom Right
+        x + this->data.width, y, depth,      1.0f, 0.0f, // Top Right
+        x, y + this->data.height, depth,     0.0f, 1.0f  // Bottom Left
     };
 
     // VAO

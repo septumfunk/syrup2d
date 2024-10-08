@@ -2,8 +2,8 @@
 #pragma once
 #include "opengl.h"
 
-#define VERTEX_SHADER_PATH "data/shaders/%s.vert"
-#define FRAGMENT_SHADER_PATH "data/shaders/%s.frag"
+#define VERTEX_SHADER_PATH "assets/shaders/%s.vert"
+#define FRAGMENT_SHADER_PATH "assets/shaders/%s.frag"
 
 /// OpenGL shader program, conveniently wrapped
 typedef struct shader_t {

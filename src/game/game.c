@@ -21,7 +21,7 @@ void game_end(void) {
 
 void game_loop(void) {
     sprite_t vap;
-    if (sprite_load(&vap, "vap") != SPRITE_ERR_NONE) {
+    if (sprite_from_image(&vap, "assets/sprites/vap.png") != SPRITE_ERR_NONE) {
         msgbox_error("Failed to load vaporeon", "Just kill yourself already. There's no reason in continuing to live if there's no vaporeon.");
         game_end();
     }
