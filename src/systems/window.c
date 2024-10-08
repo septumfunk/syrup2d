@@ -2,7 +2,10 @@
 #include "window.h"
 #include "../game/game.h"
 #include "../win32/msgbox.h"
+#include "../util/ext.h"
 #include <GLFW/glfw3.h>
+#include <cglm/cam.h>
+#include <glad/glad.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,7 +21,7 @@ void window_init(char *title, uint16_t width, uint16_t height) {
     strcpy(window->title, title);
 
     window->dimensions[0] = width;
-    window->dimensions[1] = width;
+    window->dimensions[1] = height;
 
     // Init
     if (!glfwInit()) {
@@ -27,7 +30,7 @@ void window_init(char *title, uint16_t width, uint16_t height) {
     }
 
     glfwDefaultWindowHints();
-    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); // Not visible until init is completed.
+    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
     if ((window->_handle = glfwCreateWindow(width, height, title, NULL, NULL)) == NULL) {
@@ -51,7 +54,11 @@ void window_init(char *title, uint16_t width, uint16_t height) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
+    // Ortho
+    glm_ortho(0, width, height, 0, -1, 1, (vec4 *)&window->ortho);
+
     // Ready
+    glViewport(0, 0, width, height);
     glfwSwapInterval(0); // Disable V-Sync
     glfwShowWindow(window->_handle);
 }
@@ -72,6 +79,10 @@ bool window_loop(void) {
         window->_clear_color.a
     );
     glClear(GL_COLOR_BUFFER_BIT);
+
+    for (GLenum err = glGetError(); err != GL_NO_ERROR; err = glGetError())
+        msgbox_warn("OpenGL Error", "OpenGL encountered an error: %d", err);
+
     return !glfwWindowShouldClose(window->_handle);
 }
 

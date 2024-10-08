@@ -1,7 +1,7 @@
+//? septumfunk 2024
 #include "fs.h"
 #include <stdio.h>
 #include <stdlib.h>
-
 
 fs_err_e fs_read(const char *path, char **out) {
     FILE *f = fopen(path, "r");
@@ -14,7 +14,7 @@ fs_err_e fs_read(const char *path, char **out) {
     fseek(f, 0, SEEK_SET);
 
     // Allocate buffer
-    *out = malloc(size);
+    *out = calloc(1, size);
 
     // Read into buffer
     if (fread(*out, size, 1, f) < 0)

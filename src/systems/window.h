@@ -11,6 +11,7 @@ typedef struct window_t {
     vec2 dimensions;
 
     gl_color_t _clear_color;
+    mat4 ortho;
 } window_t;
 /// Window system main instance
 extern window_t *window;

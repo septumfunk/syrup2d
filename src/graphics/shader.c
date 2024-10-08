@@ -3,6 +3,8 @@
 #include "../data/stringext.h"
 #include "../data/fs.h"
 #include "../win32/msgbox.h"
+#include "../util/ext.h"
+#include <glad/glad.h>
 
 GLuint load_shader_file(int type, const char *name) {
     GLuint shader = glCreateShader(type);
@@ -25,7 +27,7 @@ GLuint load_shader_file(int type, const char *name) {
     if (!success) {
         char log[512];
         glGetShaderInfoLog(shader, 512, NULL, log);
-        msgbox_error("OpenGL Error", "Failed to compile shader \"%s.%c\"!\n\nError:\n%s", name, type == GL_VERTEX_SHADER ? 'v' : 'f', log);
+        msgbox_error("OpenGL Error", "Failed to compile shader \"%s.%s\"!\n\nError:\n%s", name, type == GL_VERTEX_SHADER ? "vert" : "frag", log);
         goto failure;
     }
 
@@ -61,6 +63,18 @@ shader_err_e shader_load(shader_t *out, const char *name) {
         return SHADER_ERR_LINK;
     }
 
+    // VAO & VBO
+    glGenVertexArrays(1, &out->vao);
+    glGenBuffers(1, &out->vbo);
+
     return SHADER_ERR_NONE;
 }
 
+void shader_bind(shader_t *this) {
+    glUseProgram(this->program);
+}
+
+void shader_uniform_mat4(shader_t *this, GLuint location, mat4 data) {
+    shader_bind(this);
+    glUniformMatrix4fv(location, 1, false, &data[0][0]);
+}

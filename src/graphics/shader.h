@@ -10,6 +10,8 @@ typedef struct shader_t {
     GLuint program;
     GLuint vertex;
     GLuint fragment;
+
+    GLuint vbo, vao;
 } shader_t;
 
 /// Possible errors returned while loading shaders
@@ -26,3 +28,6 @@ shader_err_e shader_load(shader_t *out, const char *name);
 void shader_delete(shader_t *this);
 /// Bind OpenGL to specified shader
 void shader_bind(shader_t *this);
+
+/// Set shader uniform
+void shader_uniform_mat4(shader_t *this, GLuint location, mat4 data);
