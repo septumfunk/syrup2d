@@ -68,6 +68,7 @@ result_t fs_save(const char *path, const char *buffer, fs_size_t size) {
 result_t fs_save_checksum(const char *path, const char *buffer, fs_size_t size) {
     char *f_buffer = malloc(MD5_LENGTH + size);
     md5_hash((uint8_t *)buffer, size, (uint8_t *)f_buffer);
+    memcpy(f_buffer + MD5_LENGTH, buffer, size);
     result_t res = fs_save(path, f_buffer, MD5_LENGTH + size);
     free(f_buffer);
     return res;

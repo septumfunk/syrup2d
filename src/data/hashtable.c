@@ -95,6 +95,7 @@ void *hashtable_get(hashtable_t *this, void *key) {
 }
 
 pair_t **hashtable_pairs(hashtable_t *this, uint32_t *count) {
+    *count = 0;
     pair_t **pairs = NULL;
     for (bucket_t *buck = this->buckets; buck < this->buckets + this->bucket_count; ++buck) {
         for (pair_t *pair = buck->pair; pair != NULL; pair = pair->next) {

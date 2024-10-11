@@ -4,6 +4,7 @@
 #include "../graphics/color.h"
 #include "../data/hashtable.h"
 #include "../util/ext.h"
+#include <lua_all.h>
 
 #pragma pack(push, 1)
 typedef struct shader_global_t {
@@ -61,6 +62,7 @@ void renderer_set_camera_center(float x, float y);
 
 /// Draw a colored rectangle.
 void renderer_draw_rectangle(float x, float y, float width, float height, color_t color);
+int lua_draw_rectangle(lua_State *L);
 
 /// GLFW window resize event callback.
 void _renderer_framebuffer_resize_cb(unused GLFWwindow *handle, int width, int height);

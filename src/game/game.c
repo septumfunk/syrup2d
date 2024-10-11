@@ -10,11 +10,12 @@
 #include <string.h>
 
 void game_init(void) {
+    object_controller_init();
     window_init(GAME_TITLE, GAME_WIDTH * 6, GAME_HEIGHT * 6);
     renderer_init();
-    object_controller_init();
     sprite_manager_init(GARBAGE_COLLECTOR_ENABLED);
     controller_init();
+
     game_loop();
 }
 
@@ -33,27 +34,17 @@ void game_loop(void) {
     res = object_controller_new("pizza");
     if (error_is(res, "ObjectCodeError"))
         error_fatal(res);
+
     while (window_loop()) {
         // Update
+        object_controller_update();
         renderer_update();
-        if (is_key_pressed(KEY_ESCAPE)) {
-            game_end();
-            break;
-        }
-
-        if (is_key_down(KEY_A)) x -= 100 * window.delta_time;
-        if (is_key_down(KEY_D)) x += 100 * window.delta_time;
-        if (is_key_down(KEY_S)) y += 100 * window.delta_time;
-        if (is_key_down(KEY_W)) y -= 100 * window.delta_time;
-        renderer_set_camera_center(x, y);
+        controller_reset();
 
         // Draw
-        renderer_draw_rectangle(10, 10, 40, 40, (color_t) { 150, 150, 255, 75 });
-
-        object_controller_update();
-        renderer_draw_framebuffer();
+        object_controller_draw();
         sprite_manager_clean();
-        controller_reset();
+        renderer_draw_framebuffer();
         window_swap();
     }
 }

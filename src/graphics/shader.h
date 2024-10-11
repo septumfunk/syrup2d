@@ -4,8 +4,8 @@
 #include "../data/result.h"
 #include "../data/hashtable.h"
 
-#define VERTEX_SHADER_PATH "assets/shaders/%s.vert"
-#define FRAGMENT_SHADER_PATH "assets/shaders/%s.frag"
+#define VERTEX_SHADER_PATH "resources/shaders/%s.vert"
+#define FRAGMENT_SHADER_PATH "resources/shaders/%s.frag"
 
 /// OpenGL shader program, conveniently wrapped
 typedef struct shader_t {

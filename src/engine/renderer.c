@@ -1,6 +1,7 @@
 //? septumfunk
 #include "renderer.h"
 #include "window.h"
+#include "object_controller.h"
 #include "../graphics/shader.h"
 #include "../game/game.h"
 #include "../win32/msgbox.h"
@@ -39,6 +40,36 @@ void renderer_init(void) {
     // Projection & Camera
     glm_ortho(0, GAME_WIDTH, GAME_HEIGHT, 0, -255, 255, renderer.projection);
     renderer_set_camera_center(0, 0);
+
+    // Lua
+    lua_pushcfunction(object_controller.state, lua_draw_rectangle);
+    lua_setglobal(object_controller.state, "draw_rectangle");
+}
+
+int lua_draw_rectangle(lua_State *L) {
+    // Bounds
+    float x = luaL_checknumber(L, 1);
+    float y = luaL_checknumber(L, 2);
+    float w = luaL_checknumber(L, 3);
+    float h = luaL_checknumber(L, 4);
+
+    // Color
+    luaL_checktype(L, 5, LUA_TTABLE);
+    lua_getfield(L, 5, "r");
+    float r = luaL_checknumber(L, -1);
+    lua_pop(L, 1);
+    lua_getfield(L, 5, "g");
+    float g = luaL_checknumber(L, -1);
+    lua_pop(L, 1);
+    lua_getfield(L, 5, "b");
+    float b = luaL_checknumber(L, -1);
+    lua_pop(L, 1);
+    lua_getfield(L, 5, "a");
+    float a = luaL_checknumber(L, -1);
+    lua_pop(L, 1);
+
+    renderer_draw_rectangle(x, y, w, h, (color_t){ r, g, b, a });
+    return 0;
 }
 
 void renderer_cleanup(void) {

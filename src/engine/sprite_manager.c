@@ -1,6 +1,8 @@
 //? septumfunk 2024
 #include "sprite_manager.h"
+#include "object_controller.h"
 #include "window.h"
+#include "../util/log.h"
 #include <lauxlib.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,6 +13,10 @@ void sprite_manager_init(bool garbage_collecter) {
     memset(&sprite_manager, 0, sizeof(sprite_manager_t));
     sprite_manager.gc = garbage_collecter;
     sprite_manager.table = hashtable_string();
+
+    // Lua
+    lua_pushcfunction(object_controller.state, lua_draw_sprite);
+    lua_setglobal(object_controller.state, "draw_sprite");
 }
 
 void sprite_manager_cleanup(void) {
@@ -22,11 +28,13 @@ sprite_t *sprite_manager_get(const char *name) {
     if ((spr = hashtable_get(&sprite_manager.table, (void *)name)) == NULL) {
         spr = calloc(1, sizeof(sprite_t));
         // Attempt to load sprite
-        if (sprite_load(spr, name).is_error
-        && sprite_from_image(spr, name).is_error
-        && sprite_load(spr, "default").is_error
-        && sprite_from_image(spr, "default").is_error)
-            panic(error("Fatal Error", "Sprite manager is unable to load default sprite. Are your assets corrupt?"));
+        if (sprite_load(spr, name).is_error) {
+            log_info("Failed to load sprite '%s'. Loading default sprite.", name);
+            if (sprite_load(spr, "default").is_error)
+                panic(error("Fatal Error", "Sprite manager is unable to load default sprite. Are your assets corrupt?"));
+        } else
+            log_info("Loaded sprite '%s'.", name);
+
         sprite_t *pspr = hashtable_insert(&sprite_manager.table, (void *)name, spr, sizeof(sprite_t));
         free(spr);
         spr = pspr;
@@ -58,6 +66,7 @@ void sprite_manager_clean(void) {
             spr->decay -= window.delta_time;
             if (spr->decay <= 0) {
                 sprite_delete(spr);
+                log_info("Unloaded sprite '%s'.", (*pair)->key);
                 hashtable_remove(&sprite_manager.table, (*pair)->key);
             }
         } else {

@@ -5,15 +5,13 @@
 #include <lua.h>
 #include <lua_all.h>
 
-#define OBJECT_PATH "assets/objects/%s"
-
-/// An object's update or draw call.
-typedef void(*object_method_t)(void *caller);
+#define OBJECT_PATH "resources/objects/%s"
 
 /// A gameobject as a node in a linked list of the same type
 typedef struct gameobject_t {
     uint32_t id;
     char *type;
+    float depth;
     struct gameobject_t *previous, *next;
 } gameobject_t;
 
@@ -37,8 +35,9 @@ void object_controller_update(void);
 void object_controller_draw(void);
 /// Intantiate an object by name.
 result_t object_controller_new(const char *name);
-/// Push all C functions into a lua state.
-void object_controller_push_functions(void);
+
+/// Push an object's table onto the stack
+void object_controller_get(uint32_t id);
 /// Push an object's field onto the stack
 void object_controller_get_field(uint32_t id, const char *name);
 

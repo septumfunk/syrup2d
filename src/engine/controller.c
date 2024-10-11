@@ -2,6 +2,7 @@
 
 #include "controller.h"
 #include "window.h"
+#include "object_controller.h"
 #include "../data/stringext.h"
 #include <GLFW/glfw3.h>
 #include <lauxlib.h>
@@ -16,6 +17,12 @@ void controller_init(void) {
     memset(controller.keyboard_string, 0, KEYBOARD_STRING_COUNT);
     glfwSetKeyCallback(window._handle, _controller_keyboard_cb);
     glfwSetCharCallback(window._handle, _controller_char_cb);
+
+    // Lua
+    lua_pushcfunction(object_controller.state, lua_is_key_down);
+    lua_setglobal(object_controller.state, "is_key_down");
+    lua_pushcfunction(object_controller.state, lua_is_key_pressed);
+    lua_setglobal(object_controller.state, "is_key_pressed");
 }
 
 void controller_reset(void) {

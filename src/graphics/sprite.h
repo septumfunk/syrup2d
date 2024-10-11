@@ -3,8 +3,8 @@
 #include "opengl.h"
 #include "../data/result.h"
 
-#define SPRITE_PATH_IMAGE "assets/images/%s.png"
-#define SPRITE_PATH_DATA "assets/sprites/%s.spr"
+#define SPRITE_PATH_IMAGE "resources/images/%s.png"
+#define SPRITE_PATH_DATA "resources/sprites/%s.syrspr"
 #define SPRITE_VERSION 1.1f
 #define SPRITE_DECAY_TIME 3.0f
 

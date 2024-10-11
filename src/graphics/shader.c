@@ -22,9 +22,9 @@ result_t load_shader_file(GLuint *out, int type, const char *name) {
 
     // Prepend global
     char *global = NULL;
-    if (!fs_exists("assets/shaders/global.glsl"))
+    if (!fs_exists("resources/shaders/global.glsl"))
         panic(error("AssetsCorruptError", "Global shader data is missing. Assets are corrupted."));
-    if (fs_load("assets/shaders/global.glsl", &global, &size).is_error)
+    if (fs_load("resources/shaders/global.glsl", &global, &size).is_error)
         panic(error("AssetsCorruptError", "Global shader data is missing. Assets are corrupted."));
 
     char *osrs = source;
