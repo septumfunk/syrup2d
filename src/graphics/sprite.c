@@ -2,62 +2,127 @@
 #include "sprite.h"
 #include "../data/fs.h"
 #include "../data/stringext.h"
-#include "../systems/shaders.h"
-#include "../systems/window.h"
-#include "../util/ext.h"
-#include "../win32/msgbox.h"
-#include "shader.h"
+#include "../data/crypto.h"
+#include "../engine/renderer.h"
 #include <glad/glad.h>
 #include <stb_image.h>
+#include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 
-sprite_err_e sprite_from_image(sprite_t *out, const char *path) {
-    memset(out, 0, sizeof(sprite_t));
-    if (!fs_exists(path))
-        return SPRITE_ERR_NOT_FOUND;
+result_t sprite_load(sprite_t *out, const char *name) {
+    // Name
+    out->name = calloc(1, strlen(name) + 1);
+    strcpy(out->name, name);
+    char *path = format(SPRITE_PATH_DATA, name);
 
-    // Load Texture
-    int channels;
-    out->data.image_data = stbi_load(path, &out->data.width, &out->data.height, &channels, 4);
-    if (channels != 4) // NOT RGBA
-        return SPRITE_ERR_CHANNEL_COUNT;
+    // Load file
+    char *buffer;
+    fs_size_t size;
+    result_t res = fs_load_checksum(path, &buffer, &size);
+    if (error_is(res, "ChecksumCorruptError"))
+        return error("SpriteChecksumError", "Sprite data doesn't match its checksum. It is likely corrupt.");
+    if (res.is_error)
+        return res;
+
+    if (size <= sizeof(spritedata_t))
+        return error("SpriteCorruptError", "Sprite data appears to be corrupt.");
+    size -= 4;
+
+    memcpy(&out->data, buffer, sizeof(spritedata_t));
+    out->image_data = calloc(1, out->data.width * out->data.height * out->data.channels);
+    memcpy(out->image_data, buffer + sizeof(spritedata_t), out->data.width * out->data.height * out->data.channels);
+
     glGenTextures(1, &out->texture);
     glBindTexture(GL_TEXTURE_2D, out->texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, out->data.width, out->data.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, out->data.image_data);
+    glTexImage2D(GL_TEXTURE_2D, 0, out->data.channels == 3 ? GL_RGB : GL_RGBA, out->data.width, out->data.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, out->image_data);
     glGenerateMipmap(GL_TEXTURE_2D);
 
-    return SPRITE_ERR_NONE;
+    // Reference counter
+    out->decay = SPRITE_DECAY_TIME;
+
+    free(path);
+    return no_error();
+}
+
+result_t sprite_from_image(sprite_t *out, const char *name) {
+    // Name
+    out->name = calloc(1, strlen(name) + 1);
+    strcpy(out->name, name);
+    char *path = format(SPRITE_PATH_IMAGE, name);
+
+    // Load
+    if (!fs_exists(path))
+        return error("SpriteNotFoundError", "The requested sprite was not able to be found on the filesystem.");
+
+    // Load Texture
+    out->image_data = stbi_load(path, &out->data.width, &out->data.height, &out->data.channels, 4);
+    if (out->image_data == NULL)
+        return error("SpriteReadError", "The requested sprite's data was not able to be read.");
+    if (out->data.channels != 3 && out->data.channels != 4)
+        return error("SpriteChannelError", "The requested image is not in an RGB or RGBA format.");
+    glGenTextures(1, &out->texture);
+    glBindTexture(GL_TEXTURE_2D, out->texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, out->data.channels == 3 ? GL_RGB : GL_RGBA, out->data.width, out->data.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, out->image_data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    // Reference counter
+    out->decay = SPRITE_DECAY_TIME;
+
+    sprite_save(out);
+
+    free(path);
+    return no_error();
+}
+
+result_t sprite_save(sprite_t *this) {
+    // Size
+    int img_size = this->data.width * this->data.height * this->data.channels;
+    int buffer_size = sizeof(spritedata_t) + img_size;
+
+    // Copy to buffer
+    char *buffer = calloc(1, buffer_size);
+
+    memcpy(buffer, &this->data, sizeof(spritedata_t));
+    memcpy(buffer + sizeof(spritedata_t), this->image_data, img_size);
+
+    // Write
+    char *path = format(SPRITE_PATH_DATA, this->name);
+    result_t res = fs_save_checksum(path, buffer, buffer_size);
+    if (res.is_error)
+        return res;
+
+    free(buffer);
+    return no_error();
 }
 
 void sprite_delete(sprite_t *this) {
     glDeleteTextures(1, &this->texture);
 }
 
-void sprite_draw(sprite_t *this, int x, int y, int depth) {
+void sprite_draw(sprite_t *this, float x, float y) {
     glBindTexture(GL_TEXTURE_2D, this->texture);
-    float verts[] = {
-        // Positions         // Tex Coords
-        x, y, depth,        0.0f, 0.0f, // Top Left
-        x + this->data.width, y, depth,      1.0f, 0.0f, // Top Right
-        x, y + this->data.height, depth,     0.0f, 1.0f, // Bottom Left
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-        x + this->data.width, y + this->data.height, depth, 1.0f, 1.0f, // Bottom Right
-        x + this->data.width, y, depth,      1.0f, 0.0f, // Top Right
-        x, y + this->data.height, depth,     0.0f, 1.0f  // Bottom Left
+    float verts[] = {
+        x, y,        0.0f, 0.0f, // Top Left
+        x + this->data.width, y,      1.0f, 0.0f, // Top Right
+        x, y + this->data.height,     0.0f, 1.0f, // Bottom Left
+
+        x + this->data.width, y + this->data.height, 1.0f, 1.0f, // Bottom Right
+        x + this->data.width, y,      1.0f, 0.0f, // Top Right
+        x, y + this->data.height,     0.0f, 1.0f  // Bottom Left
     };
 
-    // VAO
-    glBindBuffer(GL_ARRAY_BUFFER, shaders[SHADER_SPRITES].vbo);
-    glBindVertexArray(shaders[SHADER_SPRITES].vao);
+    renderer_bind("sprite");
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
     glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_DYNAMIC_DRAW);
-
-    // Shader
-    shader_bind(shaders + SHADER_SPRITES);
-    shader_uniform_mat4(shaders + SHADER_SPRITES, SPRITE_LAYOUT_ORTHO, window->ortho);
 
     // Draw
     glDrawArrays(GL_TRIANGLES, 0, 6);

@@ -3,51 +3,63 @@
 #include "../data/stringext.h"
 #include "../data/fs.h"
 #include "../win32/msgbox.h"
-#include "../util/ext.h"
+#include "../game/game.h"
 #include <glad/glad.h>
+#include <stdlib.h>
 
-GLuint load_shader_file(int type, const char *name) {
-    GLuint shader = glCreateShader(type);
+result_t load_shader_file(GLuint *out, int type, const char *name) {
+    *out = glCreateShader(type);
 
     // Source
     char *path = format(type == GL_VERTEX_SHADER ? VERTEX_SHADER_PATH : FRAGMENT_SHADER_PATH, name);
     char *source = NULL;
     if (!fs_exists(path))
-        goto failure;
+        return error("ShaderNotFoundError", "The requested shader could not be found on the filesystem.");
 
-    if (fs_read(path, &source) != FS_ERR_NONE)
-        goto failure;
+    fs_size_t size;
+    if (fs_load(path, &source, &size).is_error)
+        return error("ShaderNotFoundError", "The requested shader's data could not be read.");
 
-    glShaderSource(shader, 1, (const GLchar *const *)&source, NULL);
-    glCompileShader(shader);
+    // Prepend global
+    char *global = NULL;
+    if (!fs_exists("assets/shaders/global.glsl"))
+        panic(error("AssetsCorruptError", "Global shader data is missing. Assets are corrupted."));
+    if (fs_load("assets/shaders/global.glsl", &global, &size).is_error)
+        panic(error("AssetsCorruptError", "Global shader data is missing. Assets are corrupted."));
 
-    // Error Checking
+    char *osrs = source;
+    source = format(osrs, global);
+    free(osrs);
+    osrs = source;
+    source = format("%s\0", osrs);
+    free(global);
+    free(osrs);
+
+    // Compile
+    glShaderSource(*out, 1, (const GLchar *const *)&source, NULL);
+    glCompileShader(*out);
+
     int success;
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+    glGetShaderiv(*out, GL_COMPILE_STATUS, &success);
     if (!success) {
         char log[512];
-        glGetShaderInfoLog(shader, 512, NULL, log);
-        msgbox_error("OpenGL Error", "Failed to compile shader \"%s.%s\"!\n\nError:\n%s", name, type == GL_VERTEX_SHADER ? "vert" : "frag", log);
-        goto failure;
+        glGetShaderInfoLog(*out, 512, NULL, log);
+        msgbox_error("Fatal OpenGL Error", "Failed to compile shader \"%s.%s\"!\n%s", name, type == GL_VERTEX_SHADER ? "vert" : "frag", log);
+        game_end();
     }
 
     free(path);
     free(source);
-    return shader;
-
-failure:
-    free(path);
-    free(source);
-    return 0;
+    return no_error();
 }
 
-shader_err_e shader_load(shader_t *out, const char *name) {
-    out->vertex = load_shader_file(GL_VERTEX_SHADER, name);
-    if (out->vertex < 1)
-        return SHADER_ERR_LOAD;
-    out->fragment = load_shader_file(GL_FRAGMENT_SHADER, name);
-    if (out->fragment < 1)
-        return SHADER_ERR_LOAD;
+result_t shader_load(shader_t *out, const char *name) {
+    result_t result = load_shader_file(&out->vertex, GL_VERTEX_SHADER, name);
+    if (result.is_error)
+        return result;
+    result = load_shader_file(&out->fragment, GL_FRAGMENT_SHADER, name);
+    if (result.is_error)
+        return result;
 
     out->program = glCreateProgram();
     glAttachShader(out->program, out->vertex);
@@ -59,15 +71,18 @@ shader_err_e shader_load(shader_t *out, const char *name) {
     if (!success) {
         char log[512];
         glGetProgramInfoLog(out->program, 512, NULL, log);
-        msgbox_error("OpenGL Error", "Failed to link shader \"%s\"!\n\nError:\n%s", name, log);
-        return SHADER_ERR_LINK;
+        msgbox_error("Fatal OpenGL Error", "Failed to link shader \"%s\"!\n%s", name, log);
+        game_end();
     }
 
     // VAO & VBO
     glGenVertexArrays(1, &out->vao);
     glGenBuffers(1, &out->vbo);
 
-    return SHADER_ERR_NONE;
+    // Uniform table
+    out->uniform_table = hashtable_string();
+
+    return no_error();
 }
 
 void shader_bind(shader_t *this) {

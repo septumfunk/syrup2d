@@ -1,17 +1,20 @@
 //? septumfunk
 #include "hashtable.h"
 #include "stringext.h"
+#include "crypto.h"
+#include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-pair_t *pair_create(const char *key, void *value, uint32_t size) {
+pair_t *pair_create(void *key, uint32_t key_size, void *value, uint32_t value_size) {
     pair_t *p = calloc(1, sizeof(pair_t));
 
-    p->key = calloc(1, strlen(key) + 1);
-    strcpy(p->key, key);
-    p->value = calloc(1, size);
-    memcpy(p->value, value, size);
-    p->size = size;
+    p->key = calloc(1, key_size);
+    memcpy(p->key, key, key_size);
+    p->value = calloc(1, value_size);
+    memcpy(p->value, value, value_size);
+    p->size = value_size;
 
     return p;
 }
@@ -27,16 +30,32 @@ void pair_delete(pair_t *this) {
 pair_t *pair_push(pair_t *list, pair_t *pair) {
     if (list == NULL)
         return pair;
-    for (pair_t *node = list; node->previous != NULL; node = node->previous)
-        node->previous = pair;
+    while (true) {
+        if (list->previous == NULL) {
+            list->previous = pair;
+            pair->next = list;
+            break;
+        }
+        list = list->previous;
+    }
     return pair;
 }
 
-hashtable_t hashtable_create() {
+hashtable_t hashtable_string(void) {
     return (hashtable_t) {
-        HASHTABLE_DEFAULT_SIZE,
-        0,
-        calloc(HASHTABLE_DEFAULT_SIZE, sizeof(bucket_t)),
+        .key_size = HASHTABLE_STRING,
+        .bucket_count = HASHTABLE_DEFAULT_SIZE,
+        .pair_count = 0,
+        .buckets = calloc(HASHTABLE_DEFAULT_SIZE, sizeof(bucket_t)),
+    };
+}
+
+hashtable_t hashtable_arbitrary(uint32_t size) {
+    return (hashtable_t) {
+        .key_size = size,
+        .bucket_count = HASHTABLE_DEFAULT_SIZE,
+        .pair_count = 0,
+        .buckets = calloc(HASHTABLE_DEFAULT_SIZE, sizeof(bucket_t)),
     };
 }
 
@@ -52,32 +71,42 @@ void hashtable_delete(hashtable_t *this) {
 
 void hashtable_reset(hashtable_t *this) {
     hashtable_delete(this);
-    *this = hashtable_create();
+    *this = this->key_size == HASHTABLE_STRING ? hashtable_string() : hashtable_arbitrary(this->key_size);
 }
 
-void hashtable_insert(hashtable_t *this, const char *key, void *value, uint32_t size) {
-    uint32_t hash = _jhash(key) % this->bucket_count;
-    this->buckets[hash].pair = pair_push(this->buckets[hash].pair, pair_create(key, value, size));
+void *hashtable_insert(hashtable_t *this, void *key, void *value, uint32_t size) {
+    if (hashtable_get(this, key))
+        return NULL;
+    uint32_t hash = hashtable_hash(this, key) & (this->bucket_count - 1);
+    pair_t *pair = pair_create(key, this->key_size == HASHTABLE_STRING ? strlen(key) + 1 : this->key_size, value, size);
+    this->buckets[hash].pair = pair_push(this->buckets[hash].pair, pair);
     this->pair_count++;
     if (hashtable_calculate_load(this, this->bucket_count) > HASHTABLE_LOAD_CAP)
         hashtable_rehash(this, this->bucket_count * 2);
+    return this->buckets[hash].pair->value;
 }
 
-void *hashtable_get(hashtable_t *this, const char *key) {
-    uint32_t hash = _jhash(key) % this->bucket_count;
+void *hashtable_get(hashtable_t *this, void *key) {
+    uint32_t hash = hashtable_hash(this, key) & (this->bucket_count - 1);
     for (pair_t *pair = this->buckets[hash].pair; pair != NULL; pair = pair->next)
         if (bstrcmp(key, pair->key))
             return pair->value;
     return NULL;
 }
 
-pair_t *hashtable_get_pair(hashtable_t *this, const char *key) {
-
-    return NULL;
+pair_t **hashtable_pairs(hashtable_t *this, uint32_t *count) {
+    pair_t **pairs = NULL;
+    for (bucket_t *buck = this->buckets; buck < this->buckets + this->bucket_count; ++buck) {
+        for (pair_t *pair = buck->pair; pair != NULL; pair = pair->next) {
+            pairs = realloc(pairs, (++*count) * sizeof(pair_t *));
+            pairs[*count - 1] = pair;
+        }
+    }
+    return pairs;
 }
 
-void hashtable_remove(hashtable_t *this, const char *key) {
-    uint32_t hash = _jhash(key) % this->bucket_count;
+void hashtable_remove(hashtable_t *this, void *key) {
+    uint32_t hash = hashtable_hash(this, key) & (this->bucket_count - 1);
     for (pair_t *pair = this->buckets[hash].pair; pair != NULL; pair = pair->next) {
         if (bstrcmp(key, pair->key)) {
             if (pair == this->buckets[hash].pair)
@@ -103,7 +132,7 @@ void hashtable_rehash(hashtable_t *this, uint64_t count) {
     // Rehash process
     for (bucket_t *bucket = old_buckets; bucket < old_buckets + this->bucket_count; ++bucket) {
         for (pair_t *pair = bucket->pair; pair != NULL; pair = pair->next) {
-            uint32_t hash = _jhash(pair->key) % count;
+            uint32_t hash = hashtable_hash(this, pair->key) & (count - 1);
             this->buckets[hash].pair = pair_push(this->buckets[hash].pair, pair);
         }
     }
@@ -113,15 +142,6 @@ void hashtable_rehash(hashtable_t *this, uint64_t count) {
     free(old_buckets);
 }
 
-uint32_t _jhash(const char *key) {
-    uint32_t hash = 0;
-    for (uint64_t i = 0; key[i] != '\0'; ++i) {
-        hash += key[i];
-        hash += hash << 10;
-        hash ^= hash >> 6;
-    }
-    hash += hash << 3;
-    hash ^= hash >> 11;
-    hash += hash << 15;
-    return hash;
+uint32_t hashtable_hash(hashtable_t *this, void *key) {
+    return this->key_size == HASHTABLE_STRING ? jhash_str(key) : jhash(key, this->key_size);
 }

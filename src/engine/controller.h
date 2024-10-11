@@ -2,36 +2,28 @@
 #pragma once
 #include "../util/ext.h"
 #include "../graphics/opengl.h"
+#include <lua.h>
 
 #define KEY_COUNT 349
+#define KEYBOARD_STRING_COUNT 32
 
 /// Controller input system
 typedef struct controller_t {
     bool enabled;
     bool keys_pressed[KEY_COUNT];
+    char keyboard_string[KEYBOARD_STRING_COUNT];
 } controller_t;
 /// Controller system's main instance
-extern controller_t *controller;
+extern controller_t controller;
 
 /// Keyboard mapping enum
-typedef enum key {
-    KEY_UNKNOWN = GLFW_KEY_UNKNOWN,
+typedef enum key_e {
     KEY_SPACE = GLFW_KEY_SPACE,
     KEY_APOSTROPHE = GLFW_KEY_APOSTROPHE,
     KEY_COMMA = GLFW_KEY_COMMA,
     KEY_MINUS = GLFW_KEY_MINUS,
     KEY_PERIOD = GLFW_KEY_PERIOD,
     KEY_SLASH = GLFW_KEY_SLASH,
-    KEY_K0 = GLFW_KEY_0,
-    KEY_K1 = GLFW_KEY_1,
-    KEY_K2 = GLFW_KEY_2,
-    KEY_K3 = GLFW_KEY_3,
-    KEY_K4 = GLFW_KEY_4,
-    KEY_K5 = GLFW_KEY_5,
-    KEY_K6 = GLFW_KEY_6,
-    KEY_K7 = GLFW_KEY_7,
-    KEY_K8 = GLFW_KEY_8,
-    KEY_K9 = GLFW_KEY_9,
     KEY_SEMICOLON = GLFW_KEY_SEMICOLON,
     KEY_EQUAL = GLFW_KEY_EQUAL,
     KEY_A = GLFW_KEY_A,
@@ -64,13 +56,10 @@ typedef enum key {
     KEY_BACKSLASH = GLFW_KEY_BACKSLASH,
     KEY_RIGHT_BRACKET = GLFW_KEY_RIGHT_BRACKET,
     KEY_GRAVE_ACCENT = GLFW_KEY_GRAVE_ACCENT,
-    KEY_WORLD_1 = GLFW_KEY_WORLD_1,
-    KEY_WORLD_2 = GLFW_KEY_WORLD_2,
     KEY_ESCAPE = GLFW_KEY_ESCAPE,
     KEY_ENTER = GLFW_KEY_ENTER,
     KEY_TAB = GLFW_KEY_TAB,
     KEY_BACKSPACE = GLFW_KEY_BACKSPACE,
-    KEY_INSERT = GLFW_KEY_INSERT,
     KEY_DELETE = GLFW_KEY_DELETE,
     KEY_RIGHT = GLFW_KEY_RIGHT,
     KEY_LEFT = GLFW_KEY_LEFT,
@@ -79,7 +68,6 @@ typedef enum key {
     KEY_PAGE_UP = GLFW_KEY_PAGE_UP,
     KEY_PAGE_DOWN = GLFW_KEY_PAGE_DOWN,
     KEY_HOME = GLFW_KEY_HOME,
-    KEY_END = GLFW_KEY_END,
     KEY_CAPS_LOCK = GLFW_KEY_CAPS_LOCK,
     KEY_SCROLL_LOCK = GLFW_KEY_SCROLL_LOCK,
     KEY_NUM_LOCK = GLFW_KEY_NUM_LOCK,
@@ -110,23 +98,6 @@ typedef enum key {
     KEY_F23 = GLFW_KEY_F23,
     KEY_F24 = GLFW_KEY_F24,
     KEY_F25 = GLFW_KEY_F25,
-    KEY_KP_0 = GLFW_KEY_KP_0,
-    KEY_KP_1 = GLFW_KEY_KP_1,
-    KEY_KP_2 = GLFW_KEY_KP_2,
-    KEY_KP_3 = GLFW_KEY_KP_3,
-    KEY_KP_4 = GLFW_KEY_KP_4,
-    KEY_KP_5 = GLFW_KEY_KP_5,
-    KEY_KP_6 = GLFW_KEY_KP_6,
-    KEY_KP_7 = GLFW_KEY_KP_7,
-    KEY_KP_8 = GLFW_KEY_KP_8,
-    KEY_KP_9 = GLFW_KEY_KP_9,
-    KEY_KP_DECIMAL = GLFW_KEY_KP_DECIMAL,
-    KEY_KP_DIVIDE = GLFW_KEY_KP_DIVIDE,
-    KEY_KP_MULTIPLY = GLFW_KEY_KP_MULTIPLY,
-    KEY_KP_SUBTRACT = GLFW_KEY_KP_SUBTRACT,
-    KEY_KP_ADD = GLFW_KEY_KP_ADD,
-    KEY_KP_ENTER = GLFW_KEY_KP_ENTER,
-    KEY_KP_EQUAL = GLFW_KEY_KP_EQUAL,
     KEY_LEFT_SHIFT = GLFW_KEY_LEFT_SHIFT,
     KEY_LEFT_CONTROL = GLFW_KEY_LEFT_CONTROL,
     KEY_LEFT_ALT = GLFW_KEY_LEFT_ALT,
@@ -136,19 +107,25 @@ typedef enum key {
     KEY_RIGHT_ALT = GLFW_KEY_RIGHT_ALT,
     KEY_RIGHT_SUPER = GLFW_KEY_RIGHT_SUPER,
     KEY_MENU = GLFW_KEY_MENU,
-} key;
+} key_e;
 
 /// Initialize controller
 void controller_init(void);
-/// Clean up controller
-void controller_cleanup(void);
 /// Resets all keys. Call this at the end of every frame before polling events.
 void controller_reset(void);
 
 /// Checks if key has been pressed this frame.
-bool is_key_pressed(key key);
+bool is_key_pressed(key_e key);
+int lua_is_key_pressed(lua_State *L);
 /// Checks if key is currently held down.
-bool is_key_down(key key);
+bool is_key_down(key_e key);
+int lua_is_key_down(lua_State *L);
+
+/// Check if secret code has been entered.
+bool check_code(const char *code);
 
 /// Default GLFW keyboard callback. Sets keys_pressed.
 void _controller_keyboard_cb(unused GLFWwindow* handle, int key, unused int scancode, int action, unused int mods);
+
+/// Takes input for keyboard string.
+void _controller_char_cb(unused GLFWwindow* window, unsigned int codepoint);

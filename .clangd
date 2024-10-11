@@ -9,3 +9,4 @@ CompileFlags:
 Diagnostics:
     # Due to a bug in clangd intellisense always thinks pragma pack is unterminated.
     Suppress: pragma-pack
+    UnusedIncludes: None

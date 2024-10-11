@@ -1,51 +1,42 @@
 //? septumfunk 2024
 #pragma once
 #include "opengl.h"
+#include "../data/result.h"
 
-#define SPRITE_PATH "assets/sprites/%s.mspr"
-#define SPRITE_VERSION 1.0f
-#define SPRITE_DECAY_TIME 5
+#define SPRITE_PATH_IMAGE "assets/images/%s.png"
+#define SPRITE_PATH_DATA "assets/sprites/%s.spr"
+#define SPRITE_VERSION 1.1f
+#define SPRITE_DECAY_TIME 3.0f
 
 /// Inner sprite data that gets written and read from disk
 typedef struct spritedata_t {
     float version;
     int width;
     int height;
+    int frame_count;
     int frame_delay;
-    unsigned char *image_data;
+    int channels;
 } spritedata_t;
 
 /// Sprite struct compatible with OpenGL drawing
 typedef struct sprite_t {
+    char *name;
     GLuint texture;
-    int frame;
-    int depth;
     struct spritedata_t data;
 
-    uint64_t ref_counter;
-    uint16_t timeout;
+    int ref_count;
+    float decay;
+    unsigned char *image_data;
 } sprite_t;
 
-/// Sprite errors enum
-typedef enum sprite_err_e {
-    SPRITE_ERR_NONE, /// No error in loading sprites
-    SPRITE_ERR_NOT_FOUND, /// Unable to locate sprite in the filesystem
-    SPRITE_ERR_CHANNEL_COUNT, /// Sprite has an incorrect amount of channels
-} sprite_err_e;
-
-/// Sprite layout enum
-typedef enum sprite_layout_e {
-    SPRITE_LAYOUT_POSITION,
-    SPRITE_LAYOUT_TEXCOORD,
-    SPRITE_LAYOUT_ORTHO,
-} sprite_layout_e;
-
 /// Load a sprite by its name directly
-sprite_err_e sprite_load(sprite_t *out, const char *name);
+result_t sprite_load(sprite_t *out, const char *name);
 /// Load a sprite from an image path
-sprite_err_e sprite_from_image(sprite_t *out, const char *path);
+result_t sprite_from_image(sprite_t *out, const char *name);
+/// Load a sprite from an image path
+result_t sprite_save(sprite_t *this);
 /// Destroy and clean up a sprite's resources
 void sprite_delete(sprite_t *this);
 
 /// Draw a sprite to the screen
-void sprite_draw(sprite_t *this, int x, int y, int depth);
+void sprite_draw(sprite_t *this, float x, float y);

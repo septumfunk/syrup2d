@@ -18,7 +18,7 @@
         "displayName": "Release",
         "hidden": false,
         "generator": "Ninja",
-        "binaryDir": "${sourceDir}/build",
+        "binaryDir": "${sourceDir}/build/release",
         "cacheVariables": {
           "CMAKE_BUILD_TYPE": "Release",
           "CMAKE_C_COMPILER": "clang",

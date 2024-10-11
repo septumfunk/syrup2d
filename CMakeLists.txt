@@ -18,16 +18,23 @@ add_executable(${PROJECT_NAME}
     src/data/stringext.c
     src/data/vector.c
     src/data/hashtable.c
+    src/data/result.c
+    src/data/crypto.c
 
     src/graphics/shader.c
     src/graphics/color.c
     src/graphics/sprite.c
 
-    src/systems/controller.c
-    src/systems/shaders.c
-    src/systems/window.c
+    src/engine/controller.c
+    src/engine/window.c
+    src/engine/renderer.c
+    src/engine/sprite_manager.c
+    src/engine/object_controller.c
+
+    src/util/log.c
 
     src/win32/msgbox.c
+    src/win32/files.c
 )
 
 # Libraries
@@ -36,12 +43,16 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/dependencies/glad/lib/glad.lib
     ${CMAKE_SOURCE_DIR}/dependencies/glfw3/lib/glfw3.lib
     ${CMAKE_SOURCE_DIR}/dependencies/stb/lib/stb.lib
+    ${CMAKE_SOURCE_DIR}/dependencies/md5/lib/md5.lib
+    ${CMAKE_SOURCE_DIR}/dependencies/lua5.4/lib/lua54.lib
 )
 target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE
     ${CMAKE_SOURCE_DIR}/dependencies/cglm/include
     ${CMAKE_SOURCE_DIR}/dependencies/glad/include
     ${CMAKE_SOURCE_DIR}/dependencies/glfw3/include
     ${CMAKE_SOURCE_DIR}/dependencies/stb/include
+    ${CMAKE_SOURCE_DIR}/dependencies/md5/include
+    ${CMAKE_SOURCE_DIR}/dependencies/lua5.4/include
 )
 
 # Compile Options
