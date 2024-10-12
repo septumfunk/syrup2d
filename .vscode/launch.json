@@ -9,7 +9,7 @@
             "type": "cppvsdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/rendertest.exe",
-            "preLaunchTask": "CMake: build",
+            "preLaunchTask": "CMake Build",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
