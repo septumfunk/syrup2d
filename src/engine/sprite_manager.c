@@ -17,6 +17,11 @@ void sprite_manager_init(bool garbage_collecter) {
     // Lua
     lua_pushcfunction(object_controller.state, lua_draw_sprite);
     lua_setglobal(object_controller.state, "draw_sprite");
+
+    lua_pushcfunction(object_controller.state, lua_sprite_width);
+    lua_setglobal(object_controller.state, "sprite_width");
+    lua_pushcfunction(object_controller.state, lua_sprite_height);
+    lua_setglobal(object_controller.state, "sprite_height");
 }
 
 void sprite_manager_cleanup(void) {
@@ -75,4 +80,18 @@ void sprite_manager_clean(void) {
         }
     }
     free(pairs);
+}
+
+int lua_sprite_width(lua_State *L) {
+    const char *name = luaL_checkstring(L, 1);
+    sprite_t *spr = sprite_manager_get(name);
+    lua_pushinteger(L, spr->data.width);
+    return 1;
+}
+
+int lua_sprite_height(lua_State *L) {
+    const char *name = luaL_checkstring(L, 1);
+    sprite_t *spr = sprite_manager_get(name);
+    lua_pushinteger(L, spr->data.height);
+    return 1;
 }

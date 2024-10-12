@@ -34,7 +34,7 @@ void object_controller_update(void);
 /// Call all object draw logic.
 void object_controller_draw(void);
 /// Intantiate an object by name.
-result_t object_controller_new(const char *name);
+result_t object_controller_new(const char *name, float x, float y);
 
 /// Push an object's table onto the stack
 void object_controller_get(uint32_t id);
@@ -43,5 +43,9 @@ void object_controller_get_field(uint32_t id, const char *name);
 
 /* Lua Function */
 
-/// Get an object's id by type.
-int lua_object(lua_State *L);
+/// Get an object by id.
+int lua_object_get(lua_State *L);
+/// Get a table of all objects of a type.
+int lua_object_get_all(lua_State *L);
+/// Create an object by type.
+int lua_object_new(lua_State *L);

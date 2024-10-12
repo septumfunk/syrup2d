@@ -27,3 +27,8 @@ void sprite_manager_draw(const char *name, float x, float y);
 int lua_draw_sprite(lua_State *L);
 /// Perform cleaning actions like garbage collection. Call this at the end of the frame.
 void sprite_manager_clean(void);
+
+/// Access sprite width from lua.
+int lua_sprite_width(lua_State *L);
+/// Access sprite height from lua.
+int lua_sprite_height(lua_State *L);
