@@ -20,6 +20,8 @@ result_t sprite_load(sprite_t *out, const char *name) {
     char *buffer;
     fs_size_t size;
     result_t res = fs_load_checksum(path, &buffer, &size);
+    char *head = buffer;
+
     if (error_is(res, "ChecksumCorruptError"))
         return error("SpriteChecksumError", "Sprite data doesn't match its checksum. It is likely corrupt.");
     if (res.is_error)
@@ -29,9 +31,21 @@ result_t sprite_load(sprite_t *out, const char *name) {
         return error("SpriteCorruptError", "Sprite data appears to be corrupt.");
     size -= 4;
 
-    memcpy(&out->data, buffer, sizeof(spritedata_t));
+    out->data.version = *(float *)head;
+    head += sizeof(float);
+    out->data.width = *(int *)head;
+    head += sizeof(int);
+    out->data.height = *(int *)head;
+    head += sizeof(int);
+    out->data.channels = *(int *)head;
+    head += sizeof(int);
+    out->data.frame_count = *(int *)head;
+    head += sizeof(int);
+    out->data.frame_delay = *(int *)head;
+    head += sizeof(int);
+
     out->image_data = calloc(1, out->data.width * out->data.height * out->data.channels);
-    memcpy(out->image_data, buffer + sizeof(spritedata_t), out->data.width * out->data.height * out->data.channels);
+    memcpy(out->image_data, head, out->data.width * out->data.height * out->data.channels);
 
     glGenTextures(1, &out->texture);
     glBindTexture(GL_TEXTURE_2D, out->texture);
@@ -82,9 +96,22 @@ result_t sprite_save(sprite_t *this) {
 
     // Copy to buffer
     char *buffer = calloc(1, buffer_size);
+    char *head = buffer;
 
-    memcpy(buffer, &this->data, sizeof(spritedata_t));
-    memcpy(buffer + sizeof(spritedata_t), this->image_data, img_size);
+    *(float *)head = this->data.version;
+    head += sizeof(float);
+    *(int *)head = this->data.width;
+    head += sizeof(int);
+    *(int *)head = this->data.height;
+    head += sizeof(int);
+    *(int *)head = this->data.channels;
+    head += sizeof(int);
+    *(int *)head = this->data.frame_count;
+    head += sizeof(int);
+    *(int *)head = this->data.frame_delay;
+    head += sizeof(int);
+
+    memcpy(head, this->image_data, img_size);
 
     // Write
     char *path = format(SPRITE_PATH_DATA, this->name);

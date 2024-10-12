@@ -59,6 +59,7 @@ void renderer_draw_gui(bool toggle);
 
 /// Set the renderer's camera position.
 void renderer_set_camera_center(float x, float y);
+int lua_camera_center(lua_State *L);
 
 /// Draw a colored rectangle.
 void renderer_draw_rectangle(float x, float y, float width, float height, color_t color);

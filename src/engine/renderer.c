@@ -42,6 +42,8 @@ void renderer_init(void) {
     renderer_set_camera_center(0, 0);
 
     // Lua
+    lua_pushcfunction(object_controller.state, lua_camera_center);
+    lua_setglobal(object_controller.state, "camera_center");
     lua_pushcfunction(object_controller.state, lua_draw_rectangle);
     lua_setglobal(object_controller.state, "draw_rectangle");
 }
@@ -169,6 +171,11 @@ void renderer_set_camera_center(float x, float y) {
         glm_mat4_identity(renderer.camera_matrix);
         glm_translate(renderer.camera_matrix, (vec3){-x + GAME_WIDTH / 2, -y + GAME_HEIGHT / 2, 0});
     }
+}
+
+int lua_camera_center(lua_State *L) {
+    renderer_set_camera_center(luaL_checknumber(L, 1), luaL_checknumber(L, 2));
+    return 0;
 }
 
 void renderer_draw_rectangle(float x, float y, float width, float height, color_t color) {

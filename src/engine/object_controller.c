@@ -15,6 +15,8 @@ void object_controller_init(void) {
     // Table
     object_controller.current_id = 1;
     object_controller.object_table = hashtable_string();
+
+    // Lua
     object_controller.state = luaL_newstate();
     luaL_openlibs(object_controller.state);
     luaL_dostring(object_controller.state, "package.path = package.path .. ';resources/scripts/?.lua'");
@@ -22,6 +24,7 @@ void object_controller_init(void) {
 
 void object_controller_cleanup(void) {
     hashtable_delete(&object_controller.object_table);
+    lua_close(object_controller.state);
 }
 
 void object_controller_update(void) {
@@ -37,18 +40,16 @@ void object_controller_update(void) {
             list = list->previous;
 
         for (gameobject_t *object = list; object != NULL; object = object->next) {
-            object_controller_get(object->id);
-            if (!lua_istable(object_controller.state, -1)) {
-                log_error("Unable to locate object '%s' instance %u", object->type, object->id);
-                continue;
-            }
-
             object_controller_get_field(object->id, "update");
             if (!lua_isfunction(object_controller.state, -1)) {
                 log_error("'update' is not a function in object '%s' instance %u", object->type, object->id);
                 continue;
             }
-            lua_pushvalue(object_controller.state, -2);
+            object_controller_get(object->id);
+            if (!lua_istable(object_controller.state, -1)) {
+                log_error("Unable to locate object '%s' instance %u", object->type, object->id);
+                continue;
+            }
 
             if (lua_pcall(object_controller.state, 1, 0, 0) != 0)
                 log_error("Object '%s' instance %u: %s", object->type, object->id, lua_tostring(object_controller.state, -1));
@@ -70,8 +71,6 @@ void object_controller_draw(void) {
             pairs[i]->value =((gameobject_t *)pairs[i]->value)->previous;
 
         for (gameobject_t *obj = pairs[i]->value; obj != NULL; obj = obj->next) {
-            gameobject_t *list_ref = draw_list;
-
             // Does draw exist?
             object_controller_get_field(obj->id, "draw");
             if (!lua_isfunction(object_controller.state, -1))
@@ -98,59 +97,66 @@ void object_controller_draw(void) {
             }
 
             while (true) {
-                if (draw_call->depth > list_ref->depth) {
-                    if (list_ref->next) {
-                        if (list_ref->next->depth > draw_call->depth) {
-                            list_ref->next->previous = draw_call;
-                            draw_call->next = list_ref->next;
-                            list_ref->next = draw_call;
-                            draw_call->previous = list_ref;
+                if (draw_call->depth > draw_list->depth) {
+                    if (draw_list->next) {
+                        if (draw_list->next->depth > draw_call->depth) {
+                            draw_list->next->previous = draw_call;
+                            draw_call->next = draw_list->next;
+                            draw_list->next = draw_call;
+                            draw_call->previous = draw_list;
                             break;
                         }
-                        list_ref = list_ref->next;
+                        draw_list = draw_list->next;
                         continue;
                     }
-                    list_ref->next = draw_call;
+                    draw_list->next = draw_call;
+                    draw_call->previous = draw_list;
                     break;
                 } else {
-                    if (list_ref->previous) {
-                        if (list_ref->previous->depth < draw_call->depth) {
-                            list_ref->previous->next = draw_call;
-                            draw_call->previous = list_ref->previous;
-                            list_ref->previous = draw_call;
-                            draw_call->next = list_ref;
+                    if (draw_list->previous) {
+                        if (draw_list->previous->depth < draw_call->depth) {
+                            draw_list->previous->next = draw_call;
+                            draw_call->previous = draw_list->previous;
+                            draw_list->previous = draw_call;
+                            draw_call->next = draw_list;
                             break;
                         }
-                        list_ref = list_ref->next;
+                        draw_list = draw_list->next;
                         continue;
                     }
-                    list_ref->previous = draw_call;
+                    draw_list->previous = draw_call;
+                    draw_call->next = draw_list;
                     break;
                 }
             }
         }
     }
 
+    // Reel back
+    while (draw_list->previous != NULL)
+        draw_list = draw_list->previous;
+
     for (gameobject_t *object = draw_list; object != NULL; object = object->next) {
-        object_controller_get(object->id);
-        if (!lua_istable(object_controller.state, -1)) {
-            log_error("Unable to locate object '%s' instance %u", object->type, object->id);
-            continue;
-        }
+        if (object->previous)
+            free(object->previous);
 
         object_controller_get_field(object->id, "draw");
         if (!lua_isfunction(object_controller.state, -1)) {
             log_error("'draw' is not a function in object '%s' instance %u", object->type, object->id);
             continue;
         }
-        lua_pushvalue(object_controller.state, -2);
+        object_controller_get(object->id);
+        if (!lua_istable(object_controller.state, -1)) {
+            log_error("Unable to locate object '%s' instance %u", object->type, object->id);
+            continue;
+        }
 
         if (lua_pcall(object_controller.state, 1, 0, 0) != 0)
             log_error("In object '%s' instance %u: %s", object->type, object->id, lua_tostring(object_controller.state, -1));
     }
 }
 
-result_t object_controller_new(const char *name) {
+result_t object_controller_new(const char *name, float x, float y) {
     result_t res = no_error();
     char *update_p = format("resources/objects/%s/%s.lua", name, name);
 
@@ -170,6 +176,15 @@ result_t object_controller_new(const char *name) {
         res = error("InvalidObjectError", "Object did not return a table in its code file.");
         goto cleanup;
     }
+
+    // Position
+    lua_pushliteral(object_controller.state, "x");
+    lua_pushnumber(object_controller.state, x);
+    lua_settable(object_controller.state, -3);
+
+    lua_pushliteral(object_controller.state, "y");
+    lua_pushnumber(object_controller.state, x);
+    lua_settable(object_controller.state, -3);
 
     // Objects table
     lua_getglobal(object_controller.state, "objects");
@@ -223,7 +238,10 @@ void object_controller_get(uint32_t id) {
 
     lua_pushinteger(object_controller.state, id);
     lua_gettable(object_controller.state, -2);
-    lua_remove(object_controller.state, 3);
+
+    lua_remove(object_controller.state, -2);
+    lua_remove(object_controller.state, -3);
+
     if (!lua_istable(object_controller.state, -1)) {
         log_error("Couldn't find object '%u' in objects list", id);
         lua_pop(object_controller.state, 1);
@@ -231,21 +249,9 @@ void object_controller_get(uint32_t id) {
 }
 
 void object_controller_get_field(uint32_t id, const char *name) {
-    lua_getglobal(object_controller.state, "objects");
-    if (lua_isnil(object_controller.state, -1)) {
-        lua_pop(object_controller.state, 1);
-        lua_newtable(object_controller.state);
-        lua_setglobal(object_controller.state, "objects");
-        lua_getglobal(object_controller.state, "objects");
-    }
-
-    lua_pushinteger(object_controller.state, id);
-    lua_gettable(object_controller.state, -2);
+    object_controller_get(id);
     if (lua_istable(object_controller.state, -1)) {
         lua_getfield(object_controller.state, -1, name);
-        lua_remove(object_controller.state, -4);
-        lua_remove(object_controller.state, -3);
-        lua_remove(object_controller.state, -2);
     } else
         log_error("Couldn't find object '%u' in objects list", id);
 }

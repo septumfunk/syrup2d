@@ -28,10 +28,10 @@ void game_end(void) {
 
 void game_loop(void) {
     float x = 0, y = 0;
-    result_t res = object_controller_new("player");
+    result_t res = object_controller_new("player", 0, 0);
     if (error_is(res, "ObjectCodeError"))
         error_fatal(res);
-    res = object_controller_new("pizza");
+    res = object_controller_new("pizza", -10, -10);
     if (error_is(res, "ObjectCodeError"))
         error_fatal(res);
 

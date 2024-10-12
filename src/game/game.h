@@ -1,9 +1,17 @@
 // septumfunk
 #pragma once
+#include <stdint.h>
 
-#define GAME_TITLE "The Death of Eric Cartman"
-#define GAME_WIDTH 160
-#define GAME_HEIGHT 144
+#define DEFAULT_GAME_TITLE "Syrup Engine"
+#define DEFAULT_GAME_WIDTH 256
+#define DEFAULT_GAME_HEIGHT 144
+
+/// Data structure for a game's important information
+typedef struct game_data_t {
+    char *title;
+    uint32_t game_width, game_height;
+} game_data_t;
+extern game_data_t game_data;
 
 /// Initialize the engine and engine
 void game_init(void);
@@ -11,3 +19,6 @@ void game_init(void);
 void game_end(void);
 /// Start the game loop
 void game_loop(void);
+
+/// Load game data from a file (or create it, if it doesn't exist)
+void game_load_data(const char *folder);
