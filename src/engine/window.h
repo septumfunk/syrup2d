@@ -8,12 +8,6 @@ typedef struct window_t {
     GLFWwindow *_handle;
     char *title;
     vec2 dimensions;
-
-    gl_color_t _clear_color;
-
-    double _last_time;
-    double delta_time;
-    double fps;
 } window_t;
 /// Window system main instance
 extern window_t window;
@@ -33,8 +27,6 @@ void window_swap(void);
 void window_set_title(char *title);
 /// Configure window's dimensions
 void window_resize(uint16_t width, uint16_t height);
-/// Configure window's background clear color
-void window_set_clear_color(color_t color);
 
 /// GLFW window error event callback
 void _window_error_cb(int error_code, const char* description);

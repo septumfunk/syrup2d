@@ -3,6 +3,7 @@
 #include "../data/hashtable.h"
 #include "../graphics/sprite.h"
 #include <lua.h>
+#include <stdint.h>
 
 #define GARBAGE_COLLECTOR_ENABLED true
 
@@ -21,10 +22,16 @@ void sprite_manager_cleanup(void);
 /// Get a sprite from the manager's table.
 /// This function may load the sprite if it's not already loaded.
 sprite_t *sprite_manager_get(const char *name);
+/// Import a sprite from the import folder
+void sprite_manager_import(const char *name, uint8_t frame_count, uint8_t frame_delay);
 /// Draw a sprite from the manager's table.
 /// This function may load the sprite if it's not already loaded.
-void sprite_manager_draw(const char *name, float x, float y);
+void sprite_manager_draw(const char *name, float x, float y, uint8_t frame_index);
 int lua_draw_sprite(lua_State *L);
+/// Draw text using a sprite from the manager's table.
+/// This function may load the sprite if it's not already loaded.
+void sprite_manager_draw_text(const char *name, float x, float y, const char *text);
+int lua_draw_text(lua_State *L);
 /// Perform cleaning actions like garbage collection. Call this at the end of the frame.
 void sprite_manager_clean(void);
 

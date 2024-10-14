@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.29)
 
-set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)
+set(MSVC_RUNTIME_LIBRARY MultiThreaded)
 project(
     rendertest
     VERSION 0.1
@@ -11,8 +12,6 @@ project(
 # Sources
 add_executable(${PROJECT_NAME}
     src/main.c
-
-    src/game/game.c
 
     src/data/fs.c
     src/data/stringext.c
@@ -25,6 +24,7 @@ add_executable(${PROJECT_NAME}
     src/graphics/color.c
     src/graphics/sprite.c
 
+    src/engine/engine.c
     src/engine/controller.c
     src/engine/window.c
     src/engine/renderer.c

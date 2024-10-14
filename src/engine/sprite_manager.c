@@ -1,8 +1,10 @@
 //? septumfunk 2024
 #include "sprite_manager.h"
+#include "controller.h"
+#include "engine.h"
 #include "object_controller.h"
-#include "window.h"
 #include "../util/log.h"
+#include "renderer.h"
 #include <lauxlib.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,9 +16,17 @@ void sprite_manager_init(bool garbage_collecter) {
     sprite_manager.gc = garbage_collecter;
     sprite_manager.table = hashtable_string();
 
+    renderer_bind("sprite");
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+
     // Lua
     lua_pushcfunction(object_controller.state, lua_draw_sprite);
     lua_setglobal(object_controller.state, "draw_sprite");
+    lua_pushcfunction(object_controller.state, lua_draw_text);
+    lua_setglobal(object_controller.state, "draw_text");
 
     lua_pushcfunction(object_controller.state, lua_sprite_width);
     lua_setglobal(object_controller.state, "sprite_width");
@@ -48,15 +58,61 @@ sprite_t *sprite_manager_get(const char *name) {
     return spr;
 }
 
-void sprite_manager_draw(const char *name, float x, float y) {
-    sprite_draw(sprite_manager_get(name), x, y);
+void sprite_manager_import(const char *name, uint8_t frame_count, uint8_t frame_delay) {
+    sprite_t spr;
+    result_t res;
+    if ((res = sprite_from_image(&spr, name)).is_error) {
+        error_warn(res);
+        return;
+    }
+
+    spr.data.frame_count = frame_count;
+    spr.data.frame_delay = frame_delay;
+
+    if (hashtable_get(&sprite_manager.table, (void *)name))
+        hashtable_remove(&sprite_manager.table, (void *)name);
+    hashtable_insert(&sprite_manager.table, (void *)name, &spr, sizeof(sprite_t));
+
+    sprite_save(&spr);
+}
+
+void sprite_manager_draw(const char *name, float x, float y, uint8_t frame_index) {
+    sprite_draw(sprite_manager_get(name), x, y, frame_index);
 }
 
 int lua_draw_sprite(lua_State *L) {
     const char *name = luaL_checkstring(L, 1);
     double x = luaL_checknumber(L, 2);
     double y = luaL_checknumber(L, 3);
-    sprite_manager_draw(name, x, y);
+    int frame_index = luaL_checkinteger(L, 4);
+    sprite_manager_draw(name, x, y, frame_index);
+    return 0;
+}
+
+void sprite_manager_draw_text(const char *name, float x, float y, const char *text) {
+    sprite_t *spr = sprite_manager_get(name);
+    int charwidth = spr->data.width / spr->data.frame_count;
+    float x_offset = 0;
+
+    for (const char *c = text; *c != '\0'; ++c) {
+        char idx = *c;
+
+        if (idx == '\n') {
+            y += spr->data.height;
+            x_offset = 0;
+            continue;
+        }
+
+        if (idx > 126 || idx < 32)
+            idx = '?';
+
+        sprite_manager_draw(name, x + x_offset, y, idx - 32);
+        x_offset += charwidth;
+    }
+}
+
+int lua_draw_text(lua_State *L) {
+    sprite_manager_draw_text(luaL_checkstring(L, 1), luaL_checknumber(L, 2), luaL_checknumber(L, 3), luaL_checkstring(L, 4));
     return 0;
 }
 
@@ -68,7 +124,7 @@ void sprite_manager_clean(void) {
     for (pair_t **pair = pairs; pair < pairs + count; ++pair) {
         sprite_t *spr = (sprite_t *)(*pair)->value;
         if (spr->ref_count == 0) {
-            spr->decay -= window.delta_time;
+            spr->decay -= engine.delta_time;
             if (spr->decay <= 0) {
                 sprite_delete(spr);
                 log_info("Unloaded sprite '%s'.", (*pair)->key);

@@ -3,7 +3,7 @@
 #include "opengl.h"
 #include "../data/result.h"
 
-#define SPRITE_PATH_IMAGE "resources/images/%s.png"
+#define SPRITE_PATH_IMAGE "resources/import/%s.png"
 #define SPRITE_PATH_DATA "resources/sprites/%s.syrspr"
 #define SPRITE_VERSION 1.1f
 #define SPRITE_DECAY_TIME 3.0f
@@ -11,11 +11,11 @@
 /// Inner sprite data that gets written and read from disk
 typedef struct spritedata_t {
     float version;
-    int width;
-    int height;
-    int frame_count;
-    int frame_delay;
-    int channels;
+    uint16_t width;
+    uint16_t height;
+    uint8_t frame_count;
+    uint8_t frame_delay;
+    uint8_t channels;
 } spritedata_t;
 
 /// Sprite struct compatible with OpenGL drawing
@@ -39,4 +39,4 @@ result_t sprite_save(sprite_t *this);
 void sprite_delete(sprite_t *this);
 
 /// Draw a sprite to the screen
-void sprite_draw(sprite_t *this, float x, float y);
+void sprite_draw(sprite_t *this, float x, float y, uint8_t frame_index);

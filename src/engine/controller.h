@@ -2,19 +2,10 @@
 #pragma once
 #include "../util/ext.h"
 #include "../graphics/opengl.h"
+#include <GLFW/glfw3.h>
 #include <lua.h>
 
-#define KEY_COUNT 349
-#define KEYBOARD_STRING_COUNT 32
-
-/// Controller input system
-typedef struct controller_t {
-    bool enabled;
-    bool keys_pressed[KEY_COUNT];
-    char keyboard_string[KEYBOARD_STRING_COUNT];
-} controller_t;
-/// Controller system's main instance
-extern controller_t controller;
+#define KEYBOARD_STRING_COUNT 256
 
 /// Keyboard mapping enum
 typedef enum key_e {
@@ -107,7 +98,25 @@ typedef enum key_e {
     KEY_RIGHT_ALT = GLFW_KEY_RIGHT_ALT,
     KEY_RIGHT_SUPER = GLFW_KEY_RIGHT_SUPER,
     KEY_MENU = GLFW_KEY_MENU,
+    KEY_COUNT
 } key_e;
+
+typedef enum mouse_button_e {
+    MOUSE_BUTTON_LEFT = GLFW_MOUSE_BUTTON_LEFT,
+    MOUSE_BUTTON_RIGHT = GLFW_MOUSE_BUTTON_RIGHT,
+    MOUSE_BUTTON_MIDDLE = GLFW_MOUSE_BUTTON_MIDDLE,
+    MOUSE_BUTTON_COUNT
+} mouse_button_e;
+
+/// Controller input system
+typedef struct controller_t {
+    bool enabled;
+    bool keys_pressed[KEY_COUNT];
+    bool mouse_buttons_pressed[MOUSE_BUTTON_COUNT];
+    char keyboard_string[KEYBOARD_STRING_COUNT];
+} controller_t;
+/// Controller system's main instance
+extern controller_t controller;
 
 /// Initialize controller
 void controller_init(void);
@@ -121,11 +130,24 @@ int lua_is_key_pressed(lua_State *L);
 bool is_key_down(key_e key);
 int lua_is_key_down(lua_State *L);
 
+/// Checks if mouse button has been pressed this frame.
+bool is_mouse_button_pressed(mouse_button_e mouse_button);
+int lua_is_mouse_button_pressed(lua_State *L);
+/// Checks if mouse button is down.
+bool is_mouse_button_down(mouse_button_e mouse_button);
+int lua_is_mouse_button_down(lua_State *L);
+
 /// Check if secret code has been entered.
 bool check_code(const char *code);
+/// Get the keyboard string from lua.
+/// This clears the keyboard string after.
+int lua_keyboard_string(lua_State *L);
 
 /// Default GLFW keyboard callback. Sets keys_pressed.
 void _controller_keyboard_cb(unused GLFWwindow* handle, int key, unused int scancode, int action, unused int mods);
+
+// Mouse button callback to set mouse_button pressed.
+void _controller_mouse_button_cb(unused GLFWwindow* window, int button, int action, unused int mods);
 
 /// Takes input for keyboard string.
 void _controller_char_cb(unused GLFWwindow* window, unsigned int codepoint);

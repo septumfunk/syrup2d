@@ -4,6 +4,7 @@
 #include "../graphics/color.h"
 #include "../data/hashtable.h"
 #include "../util/ext.h"
+#include <lua.h>
 #include <lua_all.h>
 
 #pragma pack(push, 1)
@@ -24,6 +25,7 @@ typedef struct renderer_t {
     // Framebuffer
     GLuint fbo;
     GLuint color_attachment;
+    gl_color_t clear_color;
 
     // Camera
     bool gui;
@@ -40,8 +42,8 @@ void renderer_cleanup(void);
 /// The renderer will load shaders which are not found in the table.
 /// Binds to VAO & VBO as well.
 void renderer_bind(const char *name);
-/// Update renderer and shader data.
-void renderer_update(void);
+/// Update shader buffer object.
+void renderer_update_buffer(void);
 /// Draw shader renderer's framebuffer to the screen.
 void renderer_draw_framebuffer(void);
 
@@ -54,12 +56,16 @@ void renderer_uniform_vec4(const char *shader, const char *name, vec4 data);
 /// Set a mat4 uniform.
 void renderer_uniform_mat4(const char *shader, const char *name, mat4 data);
 
-/// Enter or exit gui drawing mode.
-void renderer_draw_gui(bool toggle);
-
 /// Set the renderer's camera position.
 void renderer_set_camera_center(float x, float y);
 int lua_camera_center(lua_State *L);
+
+/// Set the renderer's clear color.
+void renderer_set_clear_color(color_t color);
+int lua_set_background_color(lua_State *L);
+
+/// Get the mouse position on the framebuffer.
+void renderer_fbo_mouse_position(double *x, double *y);
 
 /// Draw a colored rectangle.
 void renderer_draw_rectangle(float x, float y, float width, float height, color_t color);

@@ -1,5 +1,6 @@
 //? septumfunk 2024
 #include "sprite.h"
+#include "../engine/engine.h"
 #include "../data/fs.h"
 #include "../data/stringext.h"
 #include "../data/crypto.h"
@@ -33,16 +34,16 @@ result_t sprite_load(sprite_t *out, const char *name) {
 
     out->data.version = *(float *)head;
     head += sizeof(float);
-    out->data.width = *(int *)head;
-    head += sizeof(int);
-    out->data.height = *(int *)head;
-    head += sizeof(int);
-    out->data.channels = *(int *)head;
-    head += sizeof(int);
-    out->data.frame_count = *(int *)head;
-    head += sizeof(int);
-    out->data.frame_delay = *(int *)head;
-    head += sizeof(int);
+    out->data.width = *(uint16_t *)head;
+    head += sizeof(uint16_t);
+    out->data.height = *(uint16_t *)head;
+    head += sizeof(uint16_t);
+    out->data.channels = *(uint8_t *)head;
+    head += sizeof(uint8_t);
+    out->data.frame_count = *(uint8_t *)head;
+    head += sizeof(uint8_t);
+    out->data.frame_delay = *(uint8_t *)head;
+    head += sizeof(uint8_t);
 
     out->image_data = calloc(1, out->data.width * out->data.height * out->data.channels);
     memcpy(out->image_data, head, out->data.width * out->data.height * out->data.channels);
@@ -83,8 +84,6 @@ result_t sprite_from_image(sprite_t *out, const char *name) {
     // Reference counter
     out->decay = SPRITE_DECAY_TIME;
 
-    sprite_save(out);
-
     free(path);
     return no_error();
 }
@@ -100,16 +99,16 @@ result_t sprite_save(sprite_t *this) {
 
     *(float *)head = this->data.version;
     head += sizeof(float);
-    *(int *)head = this->data.width;
-    head += sizeof(int);
-    *(int *)head = this->data.height;
-    head += sizeof(int);
-    *(int *)head = this->data.channels;
-    head += sizeof(int);
-    *(int *)head = this->data.frame_count;
-    head += sizeof(int);
-    *(int *)head = this->data.frame_delay;
-    head += sizeof(int);
+    *(uint16_t *)head = this->data.width;
+    head += sizeof(uint16_t);
+    *(uint16_t *)head = this->data.height;
+    head += sizeof(uint16_t);
+    *(uint8_t *)head = this->data.channels;
+    head += sizeof(uint8_t);
+    *(uint8_t *)head = this->data.frame_count;
+    head += sizeof(uint8_t);
+    *(uint8_t *)head = this->data.frame_delay;
+    head += sizeof(uint8_t);
 
     memcpy(head, this->image_data, img_size);
 
@@ -118,6 +117,7 @@ result_t sprite_save(sprite_t *this) {
     result_t res = fs_save_checksum(path, buffer, buffer_size);
     if (res.is_error)
         return res;
+    free(path);
 
     free(buffer);
     return no_error();
@@ -127,28 +127,28 @@ void sprite_delete(sprite_t *this) {
     glDeleteTextures(1, &this->texture);
 }
 
-void sprite_draw(sprite_t *this, float x, float y) {
+void sprite_draw(sprite_t *this, float x, float y, uint8_t frame_index) {
     glBindTexture(GL_TEXTURE_2D, this->texture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-    float verts[] = {
-        x, y,        0.0f, 0.0f, // Top Left
-        x + this->data.width, y,      1.0f, 0.0f, // Top Right
-        x, y + this->data.height,     0.0f, 1.0f, // Bottom Left
+    float frame_width = 1.0f / this->data.frame_count;
+    float offset = frame_index * frame_width;
 
-        x + this->data.width, y + this->data.height, 1.0f, 1.0f, // Bottom Right
-        x + this->data.width, y,      1.0f, 0.0f, // Top Right
-        x, y + this->data.height,     0.0f, 1.0f  // Bottom Left
+    float true_width = this->data.width / this->data.frame_count;
+    float verts[] = {
+        x, y, offset, 0.0f, // Top Left
+        x + true_width, y, offset + frame_width, 0.0f, // Top Right
+        x, y + this->data.height, offset, 1.0f, // Bottom Left
+
+        x + true_width, y + this->data.height, offset + frame_width, 1.0f, // Bottom Right
+        x + true_width, y,  offset + frame_width, 0.0f, // Top Right
+        x, y + this->data.height, offset, 1.0f  // Bottom Left
     };
 
     renderer_bind("sprite");
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
     glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_DYNAMIC_DRAW);
 
     // Draw

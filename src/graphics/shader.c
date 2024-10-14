@@ -2,8 +2,6 @@
 #include "shader.h"
 #include "../data/stringext.h"
 #include "../data/fs.h"
-#include "../win32/msgbox.h"
-#include "../game/game.h"
 #include <glad/glad.h>
 #include <stdlib.h>
 
@@ -22,10 +20,12 @@ result_t load_shader_file(GLuint *out, int type, const char *name) {
 
     // Prepend global
     char *global = NULL;
-    if (!fs_exists("resources/shaders/global.glsl"))
+    char *p = format("resources/shaders/global.glsl");
+    if (!fs_exists(p))
         panic(error("AssetsCorruptError", "Global shader data is missing. Assets are corrupted."));
-    if (fs_load("resources/shaders/global.glsl", &global, &size).is_error)
+    if (fs_load(p, &global, &size).is_error)
         panic(error("AssetsCorruptError", "Global shader data is missing. Assets are corrupted."));
+    free(p);
 
     char *osrs = source;
     source = format(osrs, global);
@@ -44,8 +44,7 @@ result_t load_shader_file(GLuint *out, int type, const char *name) {
     if (!success) {
         char log[512];
         glGetShaderInfoLog(*out, 512, NULL, log);
-        msgbox_error("Fatal OpenGL Error", "Failed to compile shader \"%s.%s\"!\n%s", name, type == GL_VERTEX_SHADER ? "vert" : "frag", log);
-        game_end();
+        panic(error("Fatal OpenGL Error", format("Failed to compile shader \"%s.%s\"!\n%s", name, type == GL_VERTEX_SHADER ? "vert" : "frag", log)));
     }
 
     free(path);
@@ -71,8 +70,7 @@ result_t shader_load(shader_t *out, const char *name) {
     if (!success) {
         char log[512];
         glGetProgramInfoLog(out->program, 512, NULL, log);
-        msgbox_error("Fatal OpenGL Error", "Failed to link shader \"%s\"!\n%s", name, log);
-        game_end();
+        panic(error("Fatal OpenGL Error", format("Failed to link shader \"%s\"!\n%s", name, log)));
     }
 
     // VAO & VBO

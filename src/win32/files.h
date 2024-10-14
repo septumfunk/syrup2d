@@ -10,3 +10,6 @@
 /// Do not allocate out.
 /// Returns null if path is not found.
 char **win_lsdir(const char *path, int *count);
+
+/// Create a folder
+void mkdir(const char *path);

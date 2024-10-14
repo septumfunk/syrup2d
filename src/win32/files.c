@@ -27,3 +27,7 @@ char **win_lsdir(const char *path, int *count) {
 
     return array;
 }
+
+void mkdir(const char *path) {
+    CreateDirectory(path, NULL);
+}

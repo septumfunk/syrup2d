@@ -1,0 +1,10 @@
+{
+    "Lua.diagnostics.globals": [
+        "object_new"
+    ],
+    "Lua.diagnostics.disable": [
+        "undefined-global",
+        "lowercase-global",
+        "redefined-local"
+    ]
+}

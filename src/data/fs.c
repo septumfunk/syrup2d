@@ -10,7 +10,7 @@
 result_t fs_load(const char *path, char **out, fs_size_t *size) {
     if (!fs_exists(path))
         return error("FileNotFoundError", "The requested file was not found on the filesystem.");
-    FILE *f = fopen(path, "r");
+    FILE *f = fopen(path, "rb");
     if (!f)
         return error("FileOpenError", "Call to function fopen failed.");
 
@@ -20,7 +20,7 @@ result_t fs_load(const char *path, char **out, fs_size_t *size) {
     fseek(f, 0, SEEK_SET);
 
     // Allocate buffer
-    *out = calloc(1, *size);
+    *out = calloc(1, *size + 1);
 
     // Read into buffer
     if (fread(*out, *size, 1, f) < 0)
@@ -31,10 +31,13 @@ result_t fs_load(const char *path, char **out, fs_size_t *size) {
 }
 
 result_t fs_load_checksum(const char *path, char **out, fs_size_t *size) {
+    *size = 0;
     char *buffer;
     result_t res = fs_load(path, &buffer, size);
     if (res.is_error)
         return res;
+    if (*size <= MD5_LENGTH)
+        return error("ChecksumCorruptError", "Checksum check failed against requested file. It is likely corrupt.");
 
     *size -= MD5_LENGTH;
     char *file = calloc(1, *size);

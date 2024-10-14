@@ -1,7 +1,6 @@
 //? septumfunk 2024
 #include "result.h"
 #include "stringext.h"
-#include "../game/game.h"
 #include <stdlib.h>
 
 result_t error(const char *type, const char *description) {
@@ -27,6 +26,6 @@ result_t no_error(void) {
 void panic(result_t result) {
     if (result.is_error) {
         error_fatal(result);
-        game_end();
+        exit(1);
     }
 }

@@ -3,11 +3,14 @@
 #include "window.h"
 #include "object_controller.h"
 #include "../graphics/shader.h"
-#include "../game/game.h"
+#include "engine.h"
 #include "../win32/msgbox.h"
+#include <GLFW/glfw3.h>
 #include <cglm/cam.h>
 #include <cglm/mat4.h>
 #include <glad/glad.h>
+#include <lauxlib.h>
+#include <lua.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -32,13 +35,14 @@ void renderer_init(void) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderer.color_attachment, 0);
+    renderer_set_clear_color((color_t){ 0, 0, 0, 255 });
 
     // Callback
     _renderer_framebuffer_resize_cb(window._handle, window.dimensions[0], window.dimensions[1]);
     glfwSetFramebufferSizeCallback(window._handle, _renderer_framebuffer_resize_cb);
 
     // Projection & Camera
-    glm_ortho(0, GAME_WIDTH, GAME_HEIGHT, 0, -255, 255, renderer.projection);
+    glm_ortho(0, game_data.game_width, game_data.game_height, 0, -255, 255, renderer.projection);
     renderer_set_camera_center(0, 0);
 
     // Lua
@@ -46,32 +50,12 @@ void renderer_init(void) {
     lua_setglobal(object_controller.state, "camera_center");
     lua_pushcfunction(object_controller.state, lua_draw_rectangle);
     lua_setglobal(object_controller.state, "draw_rectangle");
-}
 
-int lua_draw_rectangle(lua_State *L) {
-    // Bounds
-    float x = luaL_checknumber(L, 1);
-    float y = luaL_checknumber(L, 2);
-    float w = luaL_checknumber(L, 3);
-    float h = luaL_checknumber(L, 4);
-
-    // Color
-    luaL_checktype(L, 5, LUA_TTABLE);
-    lua_getfield(L, 5, "r");
-    float r = luaL_checknumber(L, -1);
-    lua_pop(L, 1);
-    lua_getfield(L, 5, "g");
-    float g = luaL_checknumber(L, -1);
-    lua_pop(L, 1);
-    lua_getfield(L, 5, "b");
-    float b = luaL_checknumber(L, -1);
-    lua_pop(L, 1);
-    lua_getfield(L, 5, "a");
-    float a = luaL_checknumber(L, -1);
-    lua_pop(L, 1);
-
-    renderer_draw_rectangle(x, y, w, h, (color_t){ r, g, b, a });
-    return 0;
+    renderer_bind("rectangle");
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(2 * sizeof(float)));
 }
 
 void renderer_cleanup(void) {
@@ -85,7 +69,7 @@ void renderer_bind(const char *name) {
         // Attempt to load shader
         if (shader_load(shader, name).is_error) {
             msgbox_error("Fatal Error", "Shader manager is unable to load shader \"%s\". Are your assets corrupt?", name);
-            game_end();
+            engine_stop();
         }
         shader_t *pshader = hashtable_insert(&renderer.shader_table, (void *)name, shader, sizeof(shader_t));
         free(shader);
@@ -98,23 +82,28 @@ void renderer_bind(const char *name) {
     glBindVertexArray(shader->vao);
 }
 
-void renderer_update(void) {
+void renderer_update_buffer(void) {
     glBindBuffer(GL_UNIFORM_BUFFER, renderer.global);
     shader_global_t global;
     memcpy(global.projection, renderer.projection, sizeof(mat4));
-    memcpy(global.camera, renderer.camera_matrix, sizeof(mat4));
+    if (renderer.gui)
+        memcpy(global.camera, GLM_MAT4_IDENTITY, sizeof(mat4));
+    else
+        memcpy(global.camera, renderer.camera_matrix, sizeof(mat4));
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(shader_global_t), &global);
 }
 
 void renderer_draw_framebuffer(void) {
     renderer_bind("framebuffer");
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClearColor(0, 0, 0, 255);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glBindTexture(GL_TEXTURE_2D, renderer.color_attachment);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     glBindFramebuffer(GL_FRAMEBUFFER, renderer.fbo);
+    glClearColor(renderer.clear_color.r, renderer.clear_color.g, renderer.clear_color.b, renderer.clear_color.a);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
 }
@@ -160,22 +149,54 @@ void renderer_uniform_mat4(const char *shader, const char *name, mat4 data) {
     glUniformMatrix4fv(location, 1, false, &data[0][0]);
 }
 
-void renderer_draw_gui(bool toggle) {
-    if (toggle)
-        renderer_set_camera_center(0, 0);
-    renderer.gui = toggle;
-}
-
 void renderer_set_camera_center(float x, float y) {
-    if (!renderer.gui) {
-        glm_mat4_identity(renderer.camera_matrix);
-        glm_translate(renderer.camera_matrix, (vec3){-x + GAME_WIDTH / 2, -y + GAME_HEIGHT / 2, 0});
-    }
+    glm_mat4_identity(renderer.camera_matrix);
+    glm_translate(renderer.camera_matrix, (vec3){-x + game_data.game_width / 2, -y + game_data.game_height / 2, 0});
 }
 
 int lua_camera_center(lua_State *L) {
     renderer_set_camera_center(luaL_checknumber(L, 1), luaL_checknumber(L, 2));
     return 0;
+}
+
+void renderer_set_clear_color(color_t color) {
+    renderer.clear_color = color_to_gl(color);
+}
+
+int lua_set_background_color(lua_State *L) {
+    // Color
+    luaL_checktype(L, 5, LUA_TTABLE);
+    lua_getfield(L, 5, "r");
+    float r = luaL_checknumber(L, -1);
+    lua_pop(L, 1);
+    lua_getfield(L, 5, "g");
+    float g = luaL_checknumber(L, -1);
+    lua_pop(L, 1);
+    lua_getfield(L, 5, "b");
+    float b = luaL_checknumber(L, -1);
+    lua_pop(L, 1);
+    lua_getfield(L, 5, "a");
+    float a = luaL_checknumber(L, -1);
+    lua_pop(L, 1);
+
+    renderer_set_clear_color((color_t) { r, g, b, a });
+    return 0;
+}
+
+void renderer_fbo_mouse_position(double *x, double *y) {
+    double mx, my;
+    glfwGetCursorPos(window._handle, &mx, &my);
+
+    double dx = window.dimensions[0] / game_data.game_width;
+    double dy = window.dimensions[1] / game_data.game_height;
+    double aspect = dx / dy;
+    *x = mx / dx;
+    *y = my / dy;
+
+    if (aspect > 1)
+        *x = (mx - (window.dimensions[0] - dy * game_data.game_width) / 2) / dy;
+    if (aspect < 1)
+        *y = (my - (window.dimensions[1] - dx * game_data.game_height) / 2) / dx;
 }
 
 void renderer_draw_rectangle(float x, float y, float width, float height, color_t color) {
@@ -189,15 +210,35 @@ void renderer_draw_rectangle(float x, float y, float width, float height, color_
         x + width, y, c.r, c.g, c.b, c.a, // Top Right
         x, y + height, c.r, c.g, c.b, c.a,   // Bottom Left
     };
-
     renderer_bind("rectangle");
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(2 * sizeof(float)));
     glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_DYNAMIC_DRAW);
-
     glDrawArrays(GL_TRIANGLES, 0, 6);
+}
+
+int lua_draw_rectangle(lua_State *L) {
+    // Bounds
+    float x = luaL_checknumber(L, 1);
+    float y = luaL_checknumber(L, 2);
+    float w = luaL_checknumber(L, 3);
+    float h = luaL_checknumber(L, 4);
+
+    // Color
+    luaL_checktype(L, 5, LUA_TTABLE);
+    lua_getfield(L, 5, "r");
+    float r = luaL_checknumber(L, -1);
+    lua_pop(L, 1);
+    lua_getfield(L, 5, "g");
+    float g = luaL_checknumber(L, -1);
+    lua_pop(L, 1);
+    lua_getfield(L, 5, "b");
+    float b = luaL_checknumber(L, -1);
+    lua_pop(L, 1);
+    lua_getfield(L, 5, "a");
+    float a = luaL_checknumber(L, -1);
+    lua_pop(L, 1);
+
+    renderer_draw_rectangle(x, y, w, h, (color_t){ r, g, b, a });
+    return 0;
 }
 
 void _renderer_framebuffer_resize_cb(unused GLFWwindow *handle, int width, int height) {
@@ -208,7 +249,7 @@ void _renderer_framebuffer_resize_cb(unused GLFWwindow *handle, int width, int h
     // Framebuffer
     renderer_bind("framebuffer");
     float x_mult = 1, y_mult = 1;
-    float aspect = ((float)width / (float)GAME_WIDTH) / ((float)height / (float)GAME_HEIGHT);
+    float aspect = ((float)width / (float)game_data.game_width) / ((float)height / (float)game_data.game_height);
     if (aspect > 1)
         x_mult = aspect;
     else if (aspect < 1)

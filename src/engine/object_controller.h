@@ -5,8 +5,6 @@
 #include <lua.h>
 #include <lua_all.h>
 
-#define OBJECT_PATH "resources/objects/%s"
-
 /// A gameobject as a node in a linked list of the same type
 typedef struct gameobject_t {
     uint32_t id;
@@ -31,6 +29,8 @@ void object_controller_cleanup(void);
 
 /// Call all object update logic.
 void object_controller_update(void);
+/// Update global values in lua to match the ones in the engine.
+void object_controller_update_globals(void);
 /// Call all object draw logic.
 void object_controller_draw(void);
 /// Intantiate an object by name.
@@ -49,3 +49,5 @@ int lua_object_get(lua_State *L);
 int lua_object_get_all(lua_State *L);
 /// Create an object by type.
 int lua_object_new(lua_State *L);
+/// Delete an object by id.
+int lua_object_delete(lua_State *L);
