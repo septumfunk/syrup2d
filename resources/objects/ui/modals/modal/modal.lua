@@ -11,6 +11,19 @@ return {
     },
     border = 1,
 
+    start = function(this)
+        local others = object_get_all(this.type)
+        local top
+        for _, other in pairs(others) do
+            if other.id ~= this.id and (top == nil or other.depth >= top) then
+                top = other.depth
+            end
+        end
+        if top ~= nil then
+            this.depth = top + 0.2
+        end
+    end,
+
     update = function(this)
         -- Update titlebar
         if this.width < string.len(this.titlebar.title) * ui_text_size.width + 20 then
@@ -26,7 +39,33 @@ return {
         and mouse.x < this.titlebar.x + this.titlebar.width
         and mouse.y > this.titlebar.y
         and mouse.y < this.titlebar.y + this.titlebar.height
-        if hovering_titlebar and is_mouse_button_pressed(mouse_button.left) then
+
+        local hovering_other = false
+        local others = object_get_all(this.type)
+        local top = this.depth
+        for _, other in pairs(others) do
+            if other.id ~= this.id then
+                if other.depth >= top then
+                    top = other.depth
+                end
+                if not hovering_other and other.depth > this.depth then
+                    hovering_other = mouse.x > other.titlebar.x
+                    and mouse.x < other.titlebar.x + other.titlebar.width
+                    and mouse.y > other.titlebar.y
+                    and mouse.y < other.titlebar.y + other.titlebar.height
+                end
+            end
+        end
+
+        if hovering_titlebar and is_mouse_button_pressed(mouse_button.left) and not hovering_other then
+            if this.depth <= top then
+                this.depth = top
+                for _, other in pairs(others) do
+                    if other.id ~= this.id then
+                        other.depth = other.depth - 0.2
+                    end
+                end
+            end
             this.offset = { x = mouse.x - this.x, y = mouse.y - this.y }
         end
         if this.offset ~= nil then
@@ -43,7 +82,7 @@ return {
         and mouse.x < this.titlebar.x + this.titlebar.width - this.titlebar.padding / 2
         and mouse.y > this.titlebar.y + this.titlebar.padding / 2
         and mouse.y < this.titlebar.y + this.titlebar.padding / 2 + ui_text_size.height
-        if hovering_close and is_mouse_button_pressed(mouse_button.left) then
+        if hovering_close and is_mouse_button_pressed(mouse_button.left) and not hovering_other then
             object_delete(this.id)
         end
     end,

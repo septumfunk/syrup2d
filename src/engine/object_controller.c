@@ -70,9 +70,9 @@ void object_controller_update(void) {
     uint32_t *ids = NULL;
 
     for (uint32_t i = 0; i < count; ++i) {
-        if (!pairs[i]->value)
-            continue;
         gameobject_t *list = *(gameobject_t **)pairs[i]->value;
+        if (!list)
+            continue;
         // Reel back to the start
         while (list->previous != NULL)
             list = list->previous;
@@ -151,9 +151,9 @@ void object_controller_draw(void) {
     uint32_t *ids = NULL;
 
     for (uint32_t i = 0; i < count; ++i) {
-        if (!pairs[i]->value)
-            continue;
         gameobject_t *list = *(gameobject_t **)pairs[i]->value;
+        if (!list)
+            continue;
         // Reel back to the start
         while (list->previous != NULL)
             list = list->previous;
@@ -327,6 +327,13 @@ result_t object_controller_new(const char *name, float x, float y) {
     lua_pushnumber(object_controller.state, y);
     lua_settable(object_controller.state, -3);
 
+    lua_getfield(object_controller.state, -1, "depth");
+    if (!lua_isnumber(object_controller.state, -1)) {
+        lua_pushnumber(object_controller.state, 0);
+        lua_setfield(object_controller.state, -3, "depth");
+    }
+    lua_pop(object_controller.state, 1);
+
     // Objects table
     lua_getglobal(object_controller.state, "objects");
     if (lua_isnil(object_controller.state, -1)) {
@@ -469,7 +476,7 @@ int lua_object_delete(lua_State *L) {
 
     gameobject_t **ls_ptr = hashtable_get(&object_controller.object_table, (void *)type);
     gameobject_t *ls = NULL;
-    if (!ls_ptr)
+    if (!*ls_ptr)
         return 0;
 
     ls = *ls_ptr;
@@ -481,9 +488,12 @@ int lua_object_delete(lua_State *L) {
         lua_pushnil(L);
         lua_settable(L, -3);
         lua_pop(L, 1);
-        if (ls->next) {
+        if (ls->previous) {
+            hashtable_insert(&object_controller.object_table, (void *)type, &(ls->previous), sizeof(gameobject_t *));
+            ls->previous->next = ls->next;
+        } else if (ls->next) {
             hashtable_insert(&object_controller.object_table, (void *)type, &(ls->next), sizeof(gameobject_t *));
-            ls->next->previous = NULL;
+            ls->next->previous = ls->previous;
         }
         free(ls);
         return 0;
@@ -509,7 +519,7 @@ int lua_object_delete(lua_State *L) {
             lua_pushnil(L);
             lua_settable(L, -3);
             lua_pop(L, 1);
-            free(ls);
+            free(object);
             break;
         }
     }

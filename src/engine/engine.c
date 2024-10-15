@@ -41,6 +41,8 @@ void engine_start(const char *folder) {
     if (res.is_error)
         error_warn(res);
 
+    sprite_manager_import("wallpaper", 1, 0);
+
     while (window_loop()) {
         // Configure delta time
         engine._last_time = glfwGetTime();

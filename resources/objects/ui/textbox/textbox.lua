@@ -15,13 +15,14 @@ return {
     end,
 
     update = function(this)
-        this.width = this.max_length * ui_text_size.width
-        this.height = this.padding + ui_text_size.height
-
         if this.stuck_to ~= nil then
             this.x = this.stuck_to.x - this.stick_offset.x
             this.y = this.stuck_to.y - this.stick_offset.y
+            this.depth = this.stuck_to.depth + 0.1
         end
+
+        this.width = this.max_length * ui_text_size.width
+        this.height = this.padding + ui_text_size.height
 
         local x = this.x - this.width / 2
         local y = this.y - this.height / 2

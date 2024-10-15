@@ -71,10 +71,6 @@ return {
         end
     end,
 
-    update = function(this)
-
-    end,
-
     draw_gui = function(this)
         draw_sprite("wallpaper", 0, 0, 0)
         draw_rectangle(0, 0, dimensions.width, this.file_button.height, ui_color_primary)
