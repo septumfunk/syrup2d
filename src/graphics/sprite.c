@@ -5,6 +5,7 @@
 #include "../data/stringext.h"
 #include "../data/crypto.h"
 #include "../engine/renderer.h"
+#include "color.h"
 #include <glad/glad.h>
 #include <stb_image.h>
 #include <stdint.h>
@@ -128,6 +129,11 @@ void sprite_delete(sprite_t *this) {
 }
 
 void sprite_draw(sprite_t *this, float x, float y, uint8_t frame_index) {
+    sprite_draw_tint(this, x, y, frame_index, (color_t) { 255, 255, 255, 255 });
+}
+
+void sprite_draw_tint(sprite_t *this, float x, float y, uint8_t frame_index, color_t tint) {
+    gl_color_t t = color_to_gl(tint);
     glBindTexture(GL_TEXTURE_2D, this->texture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -137,15 +143,15 @@ void sprite_draw(sprite_t *this, float x, float y, uint8_t frame_index) {
     float frame_width = 1.0f / this->data.frame_count;
     float offset = frame_index * frame_width;
 
-    float true_width = this->data.width / this->data.frame_count;
+    float true_width = this->data.frame_count == 0 ? this->data.width : this->data.width / this->data.frame_count;
     float verts[] = {
-        x, y, offset, 0.0f, // Top Left
-        x + true_width, y, offset + frame_width, 0.0f, // Top Right
-        x, y + this->data.height, offset, 1.0f, // Bottom Left
+        x, y, offset, 0.0f, t.r, t.g, t.b, t.a, // Top Left
+        x + true_width, y, offset + frame_width, 0.0f, t.r, t.g, t.b, t.a, // Top Right
+        x, y + this->data.height, offset, 1.0f, t.r, t.g, t.b, t.a, // Bottom Left
 
-        x + true_width, y + this->data.height, offset + frame_width, 1.0f, // Bottom Right
-        x + true_width, y,  offset + frame_width, 0.0f, // Top Right
-        x, y + this->data.height, offset, 1.0f  // Bottom Left
+        x + true_width, y + this->data.height, offset + frame_width, 1.0f, t.r, t.g, t.b, t.a, // Bottom Right
+        x + true_width, y,  offset + frame_width, 0.0f, t.r, t.g, t.b, t.a, // Top Right
+        x, y + this->data.height, offset, 1.0f, t.r, t.g, t.b, t.a,  // Bottom Left
     };
 
     renderer_bind("sprite");

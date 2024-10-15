@@ -18,9 +18,11 @@ void sprite_manager_init(bool garbage_collecter) {
 
     renderer_bind("sprite");
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(2 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(4 * sizeof(float)));
 
     // Lua
     lua_pushcfunction(object_controller.state, lua_draw_sprite);
@@ -89,7 +91,36 @@ int lua_draw_sprite(lua_State *L) {
     return 0;
 }
 
-void sprite_manager_draw_text(const char *name, float x, float y, const char *text) {
+void sprite_manager_draw_tint(const char *name, float x, float y, uint8_t frame_index, color_t color) {
+    sprite_draw_tint(sprite_manager_get(name), x, y, frame_index, color);
+}
+
+int lua_draw_sprite_tint(lua_State *L) {
+    const char *name = luaL_checkstring(L, 1);
+    double x = luaL_checknumber(L, 2);
+    double y = luaL_checknumber(L, 3);
+    int frame_index = luaL_checkinteger(L, 4);
+
+    // Color
+    luaL_checktype(L, 5, LUA_TTABLE);
+    lua_getfield(L, 5, "r");
+    float r = luaL_checknumber(L, -1);
+    lua_pop(L, 1);
+    lua_getfield(L, 5, "g");
+    float g = luaL_checknumber(L, -1);
+    lua_pop(L, 1);
+    lua_getfield(L, 5, "b");
+    float b = luaL_checknumber(L, -1);
+    lua_pop(L, 1);
+    lua_getfield(L, 5, "a");
+    float a = luaL_checknumber(L, -1);
+    lua_pop(L, 1);
+
+    sprite_manager_draw_tint(name, x, y, frame_index, (color_t){ r, g, b, a });
+    return 0;
+}
+
+void sprite_manager_draw_text(const char *name, float x, float y, const char *text, color_t color) {
     sprite_t *spr = sprite_manager_get(name);
     int charwidth = spr->data.width / spr->data.frame_count;
     float x_offset = 0;
@@ -106,13 +137,33 @@ void sprite_manager_draw_text(const char *name, float x, float y, const char *te
         if (idx > 126 || idx < 32)
             idx = '?';
 
-        sprite_manager_draw(name, x + x_offset, y, idx - 32);
+        sprite_manager_draw_tint(name, x + x_offset, y, idx - 32, color);
         x_offset += charwidth;
     }
 }
 
 int lua_draw_text(lua_State *L) {
-    sprite_manager_draw_text(luaL_checkstring(L, 1), luaL_checknumber(L, 2), luaL_checknumber(L, 3), luaL_checkstring(L, 4));
+    const char *sprite = luaL_checkstring(L, 1);
+    float x = luaL_checknumber(L, 2);
+    float y = luaL_checknumber(L, 3);
+    const char *text = luaL_checkstring(L, 4);
+
+    // Color
+    luaL_checktype(L, 5, LUA_TTABLE);
+    lua_getfield(L, 5, "r");
+    float r = luaL_checknumber(L, -1);
+    lua_pop(L, 1);
+    lua_getfield(L, 5, "g");
+    float g = luaL_checknumber(L, -1);
+    lua_pop(L, 1);
+    lua_getfield(L, 5, "b");
+    float b = luaL_checknumber(L, -1);
+    lua_pop(L, 1);
+    lua_getfield(L, 5, "a");
+    float a = luaL_checknumber(L, -1);
+    lua_pop(L, 1);
+
+    sprite_manager_draw_text(sprite, x, y, text, (color_t) { r, g, b, a });
     return 0;
 }
 

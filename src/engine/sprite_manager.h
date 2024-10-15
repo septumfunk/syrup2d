@@ -28,9 +28,13 @@ void sprite_manager_import(const char *name, uint8_t frame_count, uint8_t frame_
 /// This function may load the sprite if it's not already loaded.
 void sprite_manager_draw(const char *name, float x, float y, uint8_t frame_index);
 int lua_draw_sprite(lua_State *L);
+/// Draw a sprite from the manager's table with a color tint.
+/// This function may load the sprite if it's not already loaded.
+void sprite_manager_draw_tint(const char *name, float x, float y, uint8_t frame_index, color_t color);
+int lua_draw_sprite_tint(lua_State *L);
 /// Draw text using a sprite from the manager's table.
 /// This function may load the sprite if it's not already loaded.
-void sprite_manager_draw_text(const char *name, float x, float y, const char *text);
+void sprite_manager_draw_text(const char *name, float x, float y, const char *text, color_t color);
 int lua_draw_text(lua_State *L);
 /// Perform cleaning actions like garbage collection. Call this at the end of the frame.
 void sprite_manager_clean(void);

@@ -9,6 +9,7 @@
 #include "../engine/object_controller.h"
 #include "../engine/controller.h"
 #include <GLFW/glfw3.h>
+#include <lauxlib.h>
 #include <lua.h>
 #include <math.h>
 #include <stdint.h>
@@ -31,8 +32,10 @@ void engine_start(const char *folder) {
     lua_pushcfunction(object_controller.state, lua_game_end);
     lua_setglobal(object_controller.state, "game_end");
 
-    // Temp
-    sprite_manager_import("ui_font", 95, 0);
+    lua_pushcfunction(object_controller.state, lua_get_game_data);
+    lua_setglobal(object_controller.state, "get_game_data");
+    lua_pushcfunction(object_controller.state, lua_set_game_data);
+    lua_setglobal(object_controller.state, "set_game_data");
 
     result_t res = object_controller_new("ui/debug_menu", 0, 0);
     if (res.is_error)
@@ -139,4 +142,43 @@ void engine_save_game_data(void) {
 
     panic(fs_save_checksum("resources/game.syr", buffer, len));
     free(buffer);
+}
+
+void engine_delete_game_data(void) {
+    free(game_data.title);
+    memset(&game_data, 0, sizeof(game_data_t));
+}
+
+int lua_get_game_data(lua_State *L) {
+    lua_newtable(L);
+    lua_pushnumber(L, game_data.version);
+    lua_setfield(L, -2, "version");
+    lua_pushstring(L, game_data.title);
+    lua_setfield(L, -2, "title");
+    lua_pushinteger(L, game_data.game_width);
+    lua_setfield(L, -2, "game_width");
+    lua_pushinteger(L, game_data.game_height);
+    lua_setfield(L, -2, "game_height");
+    lua_pushinteger(L, game_data.window_scale);
+    lua_setfield(L, -2, "window_scale");
+    return 1;
+}
+
+int lua_set_game_data(lua_State *L) {
+    game_data_t data = {0};
+    data.version = ENGINE_VERSION;
+
+    const char *title = luaL_checkstring(L, 1);
+    data.title = calloc(1, strlen(title) + 1);
+    strcpy(data.title, title);
+
+    data.game_width = luaL_checkinteger(L, 2);
+    data.game_height = luaL_checkinteger(L, 3);
+    data.window_scale = luaL_checkinteger(L, 4);
+
+    engine_delete_game_data();
+    game_data = data;
+    engine_save_game_data();
+    engine_stop();
+    return 0;
 }

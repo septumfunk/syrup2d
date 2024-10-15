@@ -7,12 +7,15 @@ return {
     padding = 4,
     hovering = false,
 
+    start = function(this)
+    end,
+
     update = function(this)
         this.hovering = mouse.x > this.x and mouse.x < this.x + this.width and mouse.y > this.y and mouse.y < this.y + this.height
         for _, entry in pairs(this.entries) do
             if entry.list ~= nil then
-                entry.list.hovering = mouse.x > entry.list.x and mouse.x < entry.list.x + entry.list.width and mouse.y > entry.list.y and mouse.y < entry.list.y + entry.list.height
-                if entry.list.hovering then
+                if mouse.x > entry.list.x and mouse.x < entry.list.x + entry.list.width and mouse.y > entry.list.y and mouse.y < entry.list.y + entry.list.height then
+                    this.hovering = true
                     break
                 end
             end
@@ -28,16 +31,22 @@ return {
         for index, entry in ipairs(this.entries) do
             y = y + (index - 1) * (ui_text_size.height + this.padding)
             if mouse.x > x and mouse.x < x + this.width and mouse.y > y and mouse.y < y + ui_text_size.height + this.padding then
-                draw_rectangle(x, y, this.width, ui_text_size.height + this.padding, hover_color)
+                if is_mouse_button_down(mouse_button.left) then
+                    draw_rectangle(x, y, this.width, ui_text_size.height + this.padding, ui_color_pressed)
+                else
+                    draw_rectangle(x, y, this.width, ui_text_size.height + this.padding, ui_color_secondary)
+                end
+                draw_ui_text(x + this.padding / 2, y + this.padding / 2, entry.text, ui_white)
+
                 if is_mouse_button_pressed(mouse_button.left) then
                     entry.x = x
                     entry.y = y
                     entry.on_click(this, index, entry)
                 end
             else
-                draw_rectangle(x, y, this.width, ui_text_size.height + this.padding, normal_color)
+                draw_rectangle(x, y, this.width, ui_text_size.height + this.padding, ui_color_primary)
+                draw_ui_text(x + this.padding / 2, y + this.padding / 2, entry.text, ui_white)
             end
-            draw_ui_text(x + this.padding / 2, y + this.padding / 2, entry.text)
         end
     end,
 
@@ -53,6 +62,20 @@ return {
         this.height = 0
         for _ in pairs(this.entries) do
             this.height = this.height + ui_text_size.height + this.padding
+        end
+    end,
+
+    cleanup = function(this)
+        for _, entry in ipairs(this.entries) do
+            if entry.list ~= nil then
+                object_delete(entry.list.id)
+            end
+        end
+    end,
+
+    delete_all = function()
+        for _, object in pairs(object_get_all("ui/list")) do
+            object_delete(object.id)
         end
     end,
 }

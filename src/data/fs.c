@@ -57,7 +57,7 @@ result_t fs_load_checksum(const char *path, char **out, fs_size_t *size) {
 }
 
 result_t fs_save(const char *path, const char *buffer, fs_size_t size) {
-    FILE *f = fopen(path, "w");
+    FILE *f = fopen(path, "wb");
     if (!f)
         return error("FileOpenError", "Call to function fopen failed.");
 
@@ -78,7 +78,7 @@ result_t fs_save_checksum(const char *path, const char *buffer, fs_size_t size) 
 }
 
 result_t fs_size(const char *path, fs_size_t *out) {
-    FILE *f = fopen(path, "r");
+    FILE *f = fopen(path, "rb");
     if (!f)
         return error("FileOpenError", "Call to function fopen failed.");;
 

@@ -7,7 +7,7 @@ return {
     hovering = false,
     width = 0,
     height = 0,
-    padding = 4,
+    padding = 2,
     on_click = function(this)
         io.write("Button '" .. this.text .. "' clicked!")
     end,
@@ -37,24 +37,43 @@ return {
                 this.y = this.mounted.other.y
             end
         end
+
+        if this.stuck_to ~= nil then
+            this.x = this.stuck_to.x - this.stick_offset.x
+            this.y = this.stuck_to.y - this.stick_offset.y
+        end
     end,
 
     draw_gui = function(this)
         if this.hovering then
-            draw_rectangle(this.x, this.y, this.width, this.height, hover_color)
+            draw_rectangle(this.x, this.y, this.width, this.height, ui_color_secondary)
+            if is_mouse_button_down(mouse_button.left) then
+                draw_rectangle(this.x, this.y, this.width, this.height, ui_color_pressed)
+            else
+                draw_rectangle(this.x, this.y, this.width, this.height, ui_color_secondary)
+            end
         else
-            draw_rectangle(this.x, this.y, this.width, this.height, normal_color)
+            draw_rectangle(this.x, this.y, this.width, this.height, ui_color_primary)
         end
-        draw_ui_text(this.x + this.padding / 2, this.y + this.padding / 2, this.text)
+        draw_ui_text(this.x + this.padding, this.y + this.padding, this.text, ui_white)
+
     end,
 
     set_text = function(this, text)
         this.text = text
-        this.width = (ui_text_size.width * string.len(this.text)) + this.padding
-        this.height = ui_text_size.height + this.padding
+        this.width = (ui_text_size.width * string.len(this.text)) + this.padding * 2
+        this.height = ui_text_size.height + this.padding * 2
     end,
 
     mount = function(this, _other, _side)
         this.mounted = { other = _other, side = _side}
+    end,
+
+    stick = function(this, other)
+        this.stuck_to = other
+        this.stick_offset = {
+            x = other.x - this.x,
+            y = other.y - this.y,
+        }
     end,
 }

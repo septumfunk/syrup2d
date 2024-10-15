@@ -36,3 +36,10 @@ int lua_game_end(lua_State *L);
 void engine_load_game_data(const char *folder);
 /// Load game data from a folder.
 void engine_save_game_data(void);
+/// Clean up after the game data.
+void engine_delete_game_data(void);
+
+/// Get game data from lua.
+int lua_get_game_data(lua_State *L);
+/// Update game data from lua.
+int lua_set_game_data(lua_State *L);
