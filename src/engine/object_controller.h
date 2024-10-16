@@ -4,6 +4,7 @@
 #include "../data/result.h"
 #include <lua.h>
 #include <lua_all.h>
+#include <stdint.h>
 
 /// A gameobject as a node in a linked list of the same type
 typedef struct gameobject_t {
@@ -12,6 +13,13 @@ typedef struct gameobject_t {
     float depth;
     struct gameobject_t *previous, *next;
 } gameobject_t;
+/// Attack a gameobject to a list of other gameobjects.
+/// If list is null, it's assumed no list exists.
+gameobject_t *gameobject_create(uint32_t id, const char *type, float depth);
+/// Delete and clean up after a gameobject.
+void gameobject_delete(gameobject_t *this);
+/// Reel back to the start of a list of gameobjects.
+gameobject_t *gameobject_reel_back(gameobject_t *list);
 
 /// Object controller system responsible for loading in objects
 /// and managing their lifetime, update calls and draw calls.
@@ -35,6 +43,8 @@ void object_controller_update_globals(void);
 void object_controller_draw(void);
 /// Intantiate an object by name.
 result_t object_controller_new(const char *name, float x, float y);
+/// Delete object by its id.
+void object_controller_delete(uint32_t id);
 
 /// Push an object's table onto the stack
 void object_controller_get(uint32_t id);

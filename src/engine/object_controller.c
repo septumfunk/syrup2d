@@ -15,6 +15,29 @@
 
 object_controller_t object_controller;
 
+gameobject_t *gameobject_create(uint32_t id, const char *type, float depth) {
+    gameobject_t *object = calloc(1, sizeof(gameobject_t));
+    *object = (gameobject_t) {
+        .id = id,
+        .type = type ? _strdup(type) : NULL,
+        .depth = depth,
+        .previous = NULL,
+        .next = NULL,
+    };
+    return object;
+}
+
+void gameobject_delete(gameobject_t *this) {
+    free(this->type);
+    free(this);
+}
+
+gameobject_t *gameobject_reel_back(gameobject_t *list) {
+    while (list && list->previous)
+        list = list->previous;
+    return list;
+}
+
 void object_controller_init(void) {
     // Table
     object_controller.current_id = 1;
@@ -52,11 +75,12 @@ void object_controller_cleanup(void) {
         while (list != NULL) {
             gameobject_t *l = list;
             list = list->next;
-            free(l);
+            gameobject_delete(l);
         }
     }
     hashtable_delete(&object_controller.object_table);
     lua_close(object_controller.state);
+    free(pairs);
 }
 
 void object_controller_update(void) {
@@ -73,15 +97,15 @@ void object_controller_update(void) {
         gameobject_t *list = *(gameobject_t **)pairs[i]->value;
         if (!list)
             continue;
-        // Reel back to the start
-        while (list->previous != NULL)
-            list = list->previous;
+        list = gameobject_reel_back(list);
         for (gameobject_t *object = list; object != NULL; object = object->next) {
             ids = realloc(ids, (id_count + 1) * sizeof(uint32_t));
             ids[id_count] = object->id;
             id_count++;
         }
     }
+
+    free(pairs);
 
     for (uint32_t *id = ids; id < ids + id_count; ++id) {
         object_controller_get_field(*id, "update");
@@ -154,15 +178,14 @@ void object_controller_draw(void) {
         gameobject_t *list = *(gameobject_t **)pairs[i]->value;
         if (!list)
             continue;
-        // Reel back to the start
-        while (list->previous != NULL)
-            list = list->previous;
+        list = gameobject_reel_back(list);
         for (gameobject_t *object = list; object != NULL; object = object->next) {
             ids = realloc(ids, (id_count + 1) * sizeof(uint32_t));
             ids[id_count] = object->id;
             id_count++;
         }
     }
+    free(pairs);
 
     for (uint32_t *id = ids; id < ids + id_count; ++id) {
         // Does draw or draw gui exist?
@@ -182,13 +205,7 @@ void object_controller_draw(void) {
         lua_pop(object_controller.state, 1);
 
         // Make draw call version
-        gameobject_t *draw_call = calloc(1, sizeof(gameobject_t));
-        *draw_call = (gameobject_t) {
-            *id,
-            NULL,
-            depth,
-            NULL, NULL,
-        };
+        gameobject_t *draw_call = gameobject_create(*id, NULL, depth);
 
         if (!draw_list) {
             draw_list = draw_call;
@@ -229,10 +246,9 @@ void object_controller_draw(void) {
             }
         }
     }
+    free(ids);
 
-    // Reel back
-    while (draw_list != NULL && draw_list->previous != NULL)
-        draw_list = draw_list->previous;
+    draw_list = gameobject_reel_back(draw_list);
 
     // Draw calls
     for (gameobject_t *object = draw_list; object != NULL; object = object->next) {
@@ -255,9 +271,11 @@ void object_controller_draw(void) {
     // Draw GUI Calls
     renderer.gui = true;
     renderer_update_buffer();
-    for (gameobject_t *object = draw_list; object != NULL; object = object->next) {
+
+    gameobject_t *object = draw_list;
+    while (object != NULL) {
         if (object->previous)
-            free(object->previous);
+            gameobject_delete(object->previous);
         object_controller_get_field(object->id, "draw_gui");
         if (!lua_isfunction(object_controller.state, -1)) {
             lua_pop(object_controller.state, 1);
@@ -273,6 +291,11 @@ void object_controller_draw(void) {
             log_error("In object '%s' instance %u: %s", lua_tostring(object_controller.state, -1), object->id, lua_tostring(object_controller.state, -2));
             lua_pop(object_controller.state, 2);
         }
+        if (!object->next) {
+            gameobject_delete(object);
+            break;
+        }
+        object = object->next;
     }
     renderer.gui = false;
     renderer_update_buffer();
@@ -292,8 +315,6 @@ result_t object_controller_new(const char *name, float x, float y) {
         goto cleanup;
     }
 
-    gameobject_t *object = calloc(1, sizeof(gameobject_t));
-
     if (luaL_dofile(object_controller.state, update_p)) {
         res = error("ObjectCodeError", lua_tostring(object_controller.state, -1));
         lua_pop(object_controller.state, 1);
@@ -306,9 +327,7 @@ result_t object_controller_new(const char *name, float x, float y) {
         goto cleanup;
     }
 
-    object->id = object_controller.current_id++;
-    object->type = calloc(1, strlen(name) + 1);
-    strcpy(object->type, name);
+    gameobject_t *object = gameobject_create(object_controller.current_id++, name, 0);
 
     // Position
     lua_pushstring(object_controller.state, "id");
@@ -329,7 +348,7 @@ result_t object_controller_new(const char *name, float x, float y) {
 
     lua_getfield(object_controller.state, -1, "depth");
     if (!lua_isnumber(object_controller.state, -1)) {
-        lua_pushnumber(object_controller.state, 0);
+        lua_pushnumber(object_controller.state, object->depth);
         lua_setfield(object_controller.state, -3, "depth");
     }
     lua_pop(object_controller.state, 1);
@@ -350,9 +369,7 @@ result_t object_controller_new(const char *name, float x, float y) {
     gameobject_t **e_ptr = (gameobject_t **)hashtable_get(&object_controller.object_table, (void *)name);
     if (e_ptr) {
         gameobject_t *existing = *e_ptr;
-        // Reel back
-        while (existing->previous != NULL)
-            existing = existing->previous;
+        existing = gameobject_reel_back(existing);
         existing->previous = object;
         object->next = existing;
     } else
@@ -379,6 +396,80 @@ result_t object_controller_new(const char *name, float x, float y) {
 cleanup:
     free(update_p);
     return res;
+}
+
+void object_controller_delete(uint32_t id) {
+    object_controller_get(id);
+    if (!lua_istable(object_controller.state, -1)) {
+        lua_pop(object_controller.state, 1);
+        return;
+    }
+
+    lua_getfield(object_controller.state, -1, "type");
+    lua_remove(object_controller.state, -3);
+    if (!lua_isstring(object_controller.state, -1)) {
+        lua_pop(object_controller.state, 1);
+        return;
+    }
+    const char *type = lua_tostring(object_controller.state, -1);
+    lua_pop(object_controller.state, 1);
+
+    lua_getfield(object_controller.state, -1, "cleanup");
+    if (lua_isfunction(object_controller.state, -1)) {
+        object_controller_get(id);
+        if (lua_pcall(object_controller.state, 1, 0, 0)) {
+            log_error("In 'cleanup' of object '%s' instance %d: %s", type, id, lua_tostring(object_controller.state, 1));
+            lua_pop(object_controller.state, 1);
+        }
+    }
+
+    gameobject_t **ls_ptr = hashtable_get(&object_controller.object_table, (void *)type);
+    gameobject_t *ls = NULL;
+    if (!*ls_ptr)
+        return;
+
+    ls = *ls_ptr;
+
+    if (ls->id == id) {
+        hashtable_remove(&object_controller.object_table, (void *)type);
+        lua_getglobal(object_controller.state, "objects");
+        lua_pushinteger(object_controller.state, id);
+        lua_pushnil(object_controller.state);
+        lua_settable(object_controller.state, -3);
+        lua_pop(object_controller.state, 1);
+        if (ls->previous) {
+            hashtable_insert(&object_controller.object_table, (void *)type, &(ls->previous), sizeof(gameobject_t *));
+            ls->previous->next = ls->next;
+        } else if (ls->next) {
+            hashtable_insert(&object_controller.object_table, (void *)type, &(ls->next), sizeof(gameobject_t *));
+            ls->next->previous = ls->previous;
+        }
+        gameobject_delete(ls);
+        return;
+    }
+
+    ls = gameobject_reel_back(ls);
+
+    for (
+        gameobject_t *object = ls;
+        object != NULL;
+        object = object->next
+    ) {
+        if (object->id == id) {
+            if (object->previous) object->previous->next = object->next;
+            if (object->next) object->next->previous = object->previous;
+            if (!object->previous && !object->next)
+                hashtable_remove(&object_controller.object_table, (void *)type);
+
+            lua_getglobal(object_controller.state, "objects");
+            lua_pushinteger(object_controller.state, id);
+            lua_pushnil(object_controller.state);
+            lua_settable(object_controller.state, -3);
+            lua_pop(object_controller.state, 1);
+            gameobject_delete(object);
+            break;
+        }
+    }
 }
 
 void object_controller_get(uint32_t id) {
@@ -420,10 +511,8 @@ int lua_object_get_all(lua_State *L) {
     if (!o_ptr)
         return 1;
 
-    // Reel back
     gameobject_t *ls = *o_ptr;
-    while (ls->previous != NULL)
-        ls = ls->previous;
+    ls = gameobject_reel_back(ls);
 
     for (
         gameobject_t *object = ls;
@@ -449,79 +538,6 @@ int lua_object_new(lua_State *L) {
 }
 
 int lua_object_delete(lua_State *L) {
-    uint32_t id = luaL_checkinteger(L, 1);
-    object_controller_get(id);
-    if (!lua_istable(L, -1)) {
-        lua_pop(L, 1);
-        return 0;
-    }
-
-    lua_getfield(L, -1, "type");
-    lua_remove(L, -3);
-    if (!lua_isstring(L, -1)) {
-        lua_pop(L, 1);
-        return 0;
-    }
-    const char *type = lua_tostring(L, -1);
-    lua_pop(L, 1);
-
-    lua_getfield(L, -1, "cleanup");
-    if (lua_isfunction(L, -1)) {
-        object_controller_get(id);
-        if (lua_pcall(L, 1, 0, 0)) {
-            log_error("In 'cleanup' of object '%s' instance %d: %s", type, id, lua_tostring(L, 1));
-            lua_pop(L, 1);
-        }
-    }
-
-    gameobject_t **ls_ptr = hashtable_get(&object_controller.object_table, (void *)type);
-    gameobject_t *ls = NULL;
-    if (!*ls_ptr)
-        return 0;
-
-    ls = *ls_ptr;
-
-    if (ls->id == id) {
-        hashtable_remove(&object_controller.object_table, (void *)type);
-        lua_getglobal(L, "objects");
-        lua_pushinteger(L, id);
-        lua_pushnil(L);
-        lua_settable(L, -3);
-        lua_pop(L, 1);
-        if (ls->previous) {
-            hashtable_insert(&object_controller.object_table, (void *)type, &(ls->previous), sizeof(gameobject_t *));
-            ls->previous->next = ls->next;
-        } else if (ls->next) {
-            hashtable_insert(&object_controller.object_table, (void *)type, &(ls->next), sizeof(gameobject_t *));
-            ls->next->previous = ls->previous;
-        }
-        free(ls);
-        return 0;
-    }
-
-    // Reel back
-    while (ls != NULL && ls->previous != NULL)
-        ls = ls->previous;
-
-    for (
-        gameobject_t *object = ls;
-        object != NULL;
-        object = object->next
-    ) {
-        if (object->id == id) {
-            if (object->previous) object->previous->next = object->next;
-            if (object->next) object->next->previous = object->previous;
-            if (!object->previous && !object->next)
-                hashtable_remove(&object_controller.object_table, (void *)type);
-
-            lua_getglobal(L, "objects");
-            lua_pushinteger(L, id);
-            lua_pushnil(L);
-            lua_settable(L, -3);
-            lua_pop(L, 1);
-            free(object);
-            break;
-        }
-    }
+    object_controller_delete(luaL_checkinteger(L, 1));
     return 0;
 }
