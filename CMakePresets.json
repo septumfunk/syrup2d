@@ -22,6 +22,7 @@
         "cacheVariables": {
           "CMAKE_BUILD_TYPE": "Release",
           "CMAKE_C_COMPILER": "clang",
+          "CMAKE_C_FLAGS_RELEASE": "-O3",
           "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
         }
       }

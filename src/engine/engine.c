@@ -37,11 +37,9 @@ void engine_start(const char *folder) {
     lua_pushcfunction(object_controller.state, lua_set_game_data);
     lua_setglobal(object_controller.state, "set_game_data");
 
-    result_t res = object_controller_new("ui/debug_menu", 0, 0);
+    result_t res = object_controller_new("engine/ui/debug_menu", 0, 0);
     if (res.is_error)
         error_warn(res);
-
-    sprite_manager_import("wallpaper", 1, 0);
 
     while (window_loop()) {
         // Configure delta time

@@ -22,6 +22,15 @@ return {
         if top ~= nil then
             this.depth = top + 0.2
         end
+
+        -- Update titlebar
+        if this.width < string.len(this.titlebar.title) * ui_text_size.width + 20 then
+            this.width = string.len(this.titlebar.title) * ui_text_size.width + 20
+        end
+        this.titlebar.width = this.width
+        this.titlebar.x = this.x
+        this.titlebar.height = ui_text_size.height + this.titlebar.padding
+        this.titlebar.y = this.y - this.titlebar.height
     end,
 
     update = function(this)
@@ -32,7 +41,7 @@ return {
         this.titlebar.width = this.width
         this.titlebar.x = this.x
         this.titlebar.height = ui_text_size.height + this.titlebar.padding
-        this.titlebar.y = this.y - this.titlebar.height
+        this.titlebar.y = this.y - this.titlebar.height - this.border
 
         -- Drag
         local hovering_titlebar = mouse.x > this.titlebar.x

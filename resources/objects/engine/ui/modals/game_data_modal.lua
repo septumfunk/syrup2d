@@ -2,7 +2,7 @@ require("ui.info")
 
 return {
     start = function(this)
-        this.modal = object_new("ui/modals/modal", 0, 0)
+        this.modal = object_new("engine/ui/modals/modal", 0, 0)
         this.modal.titlebar.title = "EDIT GAME DATA"
         this.modal.resize(this.modal, 200, 67)
         this.modal.cleanup = function(_)
@@ -12,7 +12,7 @@ return {
         this.modal.x = dimensions.width / 2 - this.modal.width / 2
         this.modal.y = dimensions.height / 2 - this.modal.height / 2
 
-        this.save_button = object_new("ui/button", 0, 0)
+        this.save_button = object_new("engine/ui/button", 0, 0)
         this.save_button.set_text(this.save_button, "SAVE AND EXIT")
         this.save_button.x = this.modal.x + this.modal.width / 2 - this.save_button.width / 2
         this.save_button.y = this.modal.y + this.modal.height - this.save_button.height - 2
@@ -20,14 +20,14 @@ return {
 
         local game_data = get_game_data();
 
-        this.title_box = object_new("ui/textbox", 0, 0)
+        this.title_box = object_new("engine/ui/textbox", 0, 0)
         this.title_box.max_length = 25;
         this.title_box.x = this.modal.x + this.modal.width / 2
         this.title_box.y = this.modal.y + ui_text_size.height + this.title_box.height / 2 + 4
         this.title_box.stick(this.title_box, this.modal)
         this.title_box.text = game_data.title
 
-        this.x_box = object_new("ui/textbox", 0, 0)
+        this.x_box = object_new("engine/ui/textbox", 0, 0)
         this.x_box.max_length = 4;
         this.x_box.start(this.x_box)
         this.x_box.x = this.title_box.x - this.x_box.width / 2 - ui_text_size.width - 2
@@ -35,7 +35,7 @@ return {
         this.x_box.stick(this.x_box, this.modal)
         this.x_box.text = tostring(math.floor(game_data.game_width))
 
-        this.y_box = object_new("ui/textbox", 0, 0)
+        this.y_box = object_new("engine/ui/textbox", 0, 0)
         this.y_box.max_length = 4;
         this.y_box.start(this.y_box)
         this.y_box.x = this.title_box.x + this.y_box.width / 2 + ui_text_size.width + 2
@@ -43,7 +43,7 @@ return {
         this.y_box.stick(this.y_box, this.modal)
         this.y_box.text = tostring(math.floor(game_data.game_height))
 
-        this.scale_box = object_new("ui/textbox", 0, 0)
+        this.scale_box = object_new("engine/ui/textbox", 0, 0)
         this.scale_box.max_length = 1;
         this.scale_box.start(this.y_box)
         this.scale_box.x = this.title_box.x
@@ -52,13 +52,7 @@ return {
         this.scale_box.text = tostring(math.floor(game_data.window_scale))
 
         this.save_button.on_click = function(_)
-            if string.len(this.title_box.text) < 0 then
-                this.title_box.text = ""
-                return
-            end
-
-            if this.title_box.text == "fart" then
-                object_delete_all()
+            if string.len(this.title_box.text) < 1 then
                 return
             end
 

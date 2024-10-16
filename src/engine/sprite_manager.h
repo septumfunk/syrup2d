@@ -22,8 +22,9 @@ void sprite_manager_cleanup(void);
 /// Get a sprite from the manager's table.
 /// This function may load the sprite if it's not already loaded.
 sprite_t *sprite_manager_get(const char *name);
-/// Import a sprite from the import folder
-void sprite_manager_import(const char *name, uint8_t frame_count, uint8_t frame_delay);
+/// Import a sprite from the import folder.
+result_t sprite_manager_import(const char *name, uint8_t frame_count, uint8_t frame_delay);
+int lua_import_sprite(lua_State *L);
 /// Draw a sprite from the manager's table.
 /// This function may load the sprite if it's not already loaded.
 void sprite_manager_draw(const char *name, float x, float y, uint8_t frame_index);
@@ -43,3 +44,5 @@ void sprite_manager_clean(void);
 int lua_sprite_width(lua_State *L);
 /// Access sprite height from lua.
 int lua_sprite_height(lua_State *L);
+/// Access sprite frame count from lua.
+int lua_sprite_frames(lua_State *L);

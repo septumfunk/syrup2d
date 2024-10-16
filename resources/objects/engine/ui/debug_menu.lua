@@ -4,20 +4,36 @@ require("ui.info")
 return {
     depth = -1,
     start = function(this)
-        this.file_button = object_new("ui/button", 0, 0)
+        this.file_button = object_new("engine/ui/button", 0, 0)
         this.file_button.set_text(this.file_button, "FILE")
         this.file_button.on_click = function(button)
-            list = object_new("ui/list", button.x, button.y + button.height)
+            list = object_new("engine/ui/list", button.x, button.y + button.height)
             list.set_entries(list, {
                 {
-                    text = "IMPORT",
+                    text = "OPEN",
                     on_click = function(this, _, entry)
-                        entry.list = object_new("ui/list", entry.x + this.width, entry.y)
+                        entry.list = object_new("engine/ui/list", entry.x + this.width, entry.y)
                         entry.list.set_entries(entry.list, {
                             {
                                 text = "SPRITE",
-                                on_click = function(_, _, entry)
-                                    io.write("Not implemented yet. \n")
+                                on_click = function(this, _, _)
+                                    modal = object_new("engine/ui/modals/sprite_open_modal", 0, 0)
+                                    this.delete_all()
+                                end,
+                            },
+                        })
+                    end,
+                },
+                {
+                    text = "IMPORT",
+                    on_click = function(this, _, entry)
+                        entry.list = object_new("engine/ui/list", entry.x + this.width, entry.y)
+                        entry.list.set_entries(entry.list, {
+                            {
+                                text = "SPRITE",
+                                on_click = function(this, _, _)
+                                    modal = object_new("engine/ui/modals/sprite_import_modal", 0, 0)
+                                    this.delete_all()
                                 end,
                             },
                         })
@@ -32,23 +48,23 @@ return {
             })
         end
 
-        this.game_button = object_new("ui/button", 0, 0)
+        this.game_button = object_new("engine/ui/button", 0, 0)
         this.game_button.set_text(this.game_button, "GAME")
         this.game_button.mount(this.game_button, this.file_button, "right")
         this.game_button.on_click = function(button)
-            local list = object_new("ui/list", button.x, button.y + button.height)
+            local list = object_new("engine/ui/list", button.x, button.y + button.height)
             list.set_entries(list, {
                 {
                     text = "EDIT GAME DATA",
-                    on_click = function(this, _, entry)
-                        modal = object_new("ui/modals/game_data_modal", 30, 30)
+                    on_click = function(this, _, _)
+                        modal = object_new("engine/ui/modals/game_data_modal", 0, 0)
                         this.delete_all()
                     end
                 },
                 {
                     text = "SPAWN OBJECT",
-                    on_click = function(this, _, entry)
-                        modal = object_new("ui/modals/game_data_modal", 30, 30)
+                    on_click = function(this, _, _)
+                        modal = object_new("engine/ui/modals/spawn_object_modal", 0, 0)
                         this.delete_all()
                     end
                 },

@@ -7,9 +7,6 @@ return {
     padding = 4,
     hovering = false,
 
-    start = function(this)
-    end,
-
     update = function(this)
         this.hovering = mouse.x > this.x and mouse.x < this.x + this.width and mouse.y > this.y and mouse.y < this.y + this.height
         for _, entry in pairs(this.entries) do
@@ -29,7 +26,6 @@ return {
         x = this.x
         y = this.y
         for index, entry in ipairs(this.entries) do
-            y = y + (index - 1) * (ui_text_size.height + this.padding)
             if mouse.x > x and mouse.x < x + this.width and mouse.y > y and mouse.y < y + ui_text_size.height + this.padding then
                 if is_mouse_button_down(mouse_button.left) then
                     draw_rectangle(x, y, this.width, ui_text_size.height + this.padding, ui_color_pressed)
@@ -47,6 +43,7 @@ return {
                 draw_rectangle(x, y, this.width, ui_text_size.height + this.padding, ui_color_primary)
                 draw_ui_text(x + this.padding / 2, y + this.padding / 2, entry.text, ui_white)
             end
+            y = y + ui_text_size.height + this.padding
         end
     end,
 
@@ -54,8 +51,9 @@ return {
         this.entries = entries
 
         for _, entry in ipairs(this.entries) do
-            if string.len(entry.text) > this.width then
-                this.width = string.len(entry.text) * ui_text_size.width + this.padding
+            local my_width = string.len(entry.text) * ui_text_size.width + this.padding
+            if my_width > this.width then
+                this.width = my_width
             end
         end
 
@@ -74,7 +72,7 @@ return {
     end,
 
     delete_all = function()
-        for _, object in pairs(object_get_all("ui/list")) do
+        for _, object in pairs(object_get_all("engine/ui/list")) do
             object_delete(object.id)
         end
     end,

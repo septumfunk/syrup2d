@@ -16,7 +16,6 @@ typedef struct spritedata_t {
     uint16_t height;
     uint8_t frame_count;
     uint8_t frame_delay;
-    uint8_t channels;
 } spritedata_t;
 
 /// Sprite struct compatible with OpenGL drawing

@@ -6,6 +6,7 @@
 #include "../util/log.h"
 #include "renderer.h"
 #include <lauxlib.h>
+#include <lua.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -25,8 +26,13 @@ void sprite_manager_init(bool garbage_collecter) {
     glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(4 * sizeof(float)));
 
     // Lua
+    lua_pushcfunction(object_controller.state, lua_import_sprite);
+    lua_setglobal(object_controller.state, "import_sprite");
     lua_pushcfunction(object_controller.state, lua_draw_sprite);
     lua_setglobal(object_controller.state, "draw_sprite");
+    lua_pushcfunction(object_controller.state, lua_draw_sprite_tint);
+    lua_setglobal(object_controller.state, "draw_sprite_tint");
+
     lua_pushcfunction(object_controller.state, lua_draw_text);
     lua_setglobal(object_controller.state, "draw_text");
 
@@ -34,6 +40,8 @@ void sprite_manager_init(bool garbage_collecter) {
     lua_setglobal(object_controller.state, "sprite_width");
     lua_pushcfunction(object_controller.state, lua_sprite_height);
     lua_setglobal(object_controller.state, "sprite_height");
+    lua_pushcfunction(object_controller.state, lua_sprite_frames);
+    lua_setglobal(object_controller.state, "sprite_frames");
 }
 
 void sprite_manager_cleanup(void) {
@@ -60,22 +68,34 @@ sprite_t *sprite_manager_get(const char *name) {
     return spr;
 }
 
-void sprite_manager_import(const char *name, uint8_t frame_count, uint8_t frame_delay) {
+result_t sprite_manager_import(const char *name, uint8_t frame_count, uint8_t frame_delay) {
     sprite_t spr;
     result_t res;
     if ((res = sprite_from_image(&spr, name)).is_error) {
         error_warn(res);
-        return;
+        return res;
     }
 
     spr.data.frame_count = frame_count;
     spr.data.frame_delay = frame_delay;
+
+    if (spr.data.width % spr.data.frame_count != 0) {
+        sprite_delete(&spr);
+        return error("SpriteFrameError", "The sprite's width is not evenly divisible by the provided frame count.");
+    }
 
     if (hashtable_get(&sprite_manager.table, (void *)name))
         hashtable_remove(&sprite_manager.table, (void *)name);
     hashtable_insert(&sprite_manager.table, (void *)name, &spr, sizeof(sprite_t));
 
     sprite_save(&spr);
+
+    return no_error();
+}
+
+int lua_import_sprite(lua_State *L) {
+    lua_pushboolean(L, !sprite_manager_import(luaL_checkstring(L, 1), luaL_checkinteger(L, 2), luaL_checkinteger(L, 3)).is_error);
+    return 1;
 }
 
 void sprite_manager_draw(const char *name, float x, float y, uint8_t frame_index) {
@@ -200,5 +220,12 @@ int lua_sprite_height(lua_State *L) {
     const char *name = luaL_checkstring(L, 1);
     sprite_t *spr = sprite_manager_get(name);
     lua_pushinteger(L, spr->data.height);
+    return 1;
+}
+
+int lua_sprite_frames(lua_State *L) {
+    const char *name = luaL_checkstring(L, 1);
+    sprite_t *spr = sprite_manager_get(name);
+    lua_pushinteger(L, spr->data.frame_count);
     return 1;
 }

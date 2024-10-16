@@ -31,7 +31,6 @@ result_t sprite_load(sprite_t *out, const char *name) {
 
     if (size <= sizeof(spritedata_t))
         return error("SpriteCorruptError", "Sprite data appears to be corrupt.");
-    size -= 4;
 
     out->data.version = *(float *)head;
     head += sizeof(float);
@@ -39,19 +38,17 @@ result_t sprite_load(sprite_t *out, const char *name) {
     head += sizeof(uint16_t);
     out->data.height = *(uint16_t *)head;
     head += sizeof(uint16_t);
-    out->data.channels = *(uint8_t *)head;
-    head += sizeof(uint8_t);
     out->data.frame_count = *(uint8_t *)head;
     head += sizeof(uint8_t);
     out->data.frame_delay = *(uint8_t *)head;
     head += sizeof(uint8_t);
 
-    out->image_data = calloc(1, out->data.width * out->data.height * out->data.channels);
-    memcpy(out->image_data, head, out->data.width * out->data.height * out->data.channels);
+    out->image_data = calloc(1, out->data.width * out->data.height * 4 /* (RGBA) */);
+    memcpy(out->image_data, head, out->data.width * out->data.height * 4 /* (RGBA) */);
 
     glGenTextures(1, &out->texture);
     glBindTexture(GL_TEXTURE_2D, out->texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, out->data.channels == 3 ? GL_RGB : GL_RGBA, out->data.width, out->data.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, out->image_data);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, out->data.width, out->data.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, out->image_data);
     glGenerateMipmap(GL_TEXTURE_2D);
 
     // Reference counter
@@ -72,14 +69,16 @@ result_t sprite_from_image(sprite_t *out, const char *name) {
         return error("SpriteNotFoundError", "The requested sprite was not able to be found on the filesystem.");
 
     // Load Texture
-    out->image_data = stbi_load(path, &out->data.width, &out->data.height, &out->data.channels, 4);
+    int width, height, channels;
+    out->image_data = stbi_load(path, &width, &height, &channels, 4);
+    out->data.width = width;
+    out->data.height = height;
+
     if (out->image_data == NULL)
         return error("SpriteReadError", "The requested sprite's data was not able to be read.");
-    if (out->data.channels != 3 && out->data.channels != 4)
-        return error("SpriteChannelError", "The requested image is not in an RGB or RGBA format.");
     glGenTextures(1, &out->texture);
     glBindTexture(GL_TEXTURE_2D, out->texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, out->data.channels == 3 ? GL_RGB : GL_RGBA, out->data.width, out->data.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, out->image_data);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, out->data.width, out->data.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, out->image_data);
     glGenerateMipmap(GL_TEXTURE_2D);
 
     // Reference counter
@@ -91,7 +90,7 @@ result_t sprite_from_image(sprite_t *out, const char *name) {
 
 result_t sprite_save(sprite_t *this) {
     // Size
-    int img_size = this->data.width * this->data.height * this->data.channels;
+    int img_size = this->data.width * this->data.height * 4 /* (RGBA) */;
     int buffer_size = sizeof(spritedata_t) + img_size;
 
     // Copy to buffer
@@ -104,8 +103,6 @@ result_t sprite_save(sprite_t *this) {
     head += sizeof(uint16_t);
     *(uint16_t *)head = this->data.height;
     head += sizeof(uint16_t);
-    *(uint8_t *)head = this->data.channels;
-    head += sizeof(uint8_t);
     *(uint8_t *)head = this->data.frame_count;
     head += sizeof(uint8_t);
     *(uint8_t *)head = this->data.frame_delay;
