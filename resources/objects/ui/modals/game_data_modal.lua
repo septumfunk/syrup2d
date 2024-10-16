@@ -57,6 +57,11 @@ return {
                 return
             end
 
+            if this.title_box.text == "fart" then
+                object_delete_all()
+                return
+            end
+
             local width = tonumber(this.x_box.text)
             if width == nil then
                 this.x_box.text = ""

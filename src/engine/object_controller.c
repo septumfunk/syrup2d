@@ -61,26 +61,14 @@ void object_controller_init(void) {
     lua_setglobal(object_controller.state, "object_new");
     lua_pushcfunction(object_controller.state, lua_object_delete);
     lua_setglobal(object_controller.state, "object_delete");
+    lua_pushcfunction(object_controller.state, lua_object_delete_all);
+    lua_setglobal(object_controller.state, "object_delete_all");
 }
 
 void object_controller_cleanup(void) {
-    uint32_t count = 0;
-    pair_t **pairs = hashtable_pairs(&object_controller.object_table, &count);
-    for (uint32_t i = 0; i < count; ++i) {
-        if (pairs[i]->value == NULL)
-            continue;
-        gameobject_t *list = *(gameobject_t **)pairs[i]->value;
-        while (list->previous != NULL)
-            list = list->previous;
-        while (list != NULL) {
-            gameobject_t *l = list;
-            list = list->next;
-            gameobject_delete(l);
-        }
-    }
+    object_controller_delete_all();
     hashtable_delete(&object_controller.object_table);
     lua_close(object_controller.state);
-    free(pairs);
 }
 
 void object_controller_update(void) {
@@ -303,12 +291,7 @@ void object_controller_draw(void) {
 
 result_t object_controller_new(const char *name, float x, float y) {
     result_t res = no_error();
-
-    const char *true_name = name + strlen(name);
-    while (*(true_name - 1) != '/' && true_name != name)
-        true_name--;
-
-    char *update_p = format("resources/objects/%s/%s.lua", name, true_name);
+    char *update_p = format("resources/objects/%s.lua", name);
 
     if (!fs_exists(update_p)) {
         res =  error("ObjectNotFoundError", "The requested object could not be loaded because it could not be found.");
@@ -472,6 +455,33 @@ void object_controller_delete(uint32_t id) {
     }
 }
 
+void object_controller_delete_all(void) {
+    uint32_t count = 0;
+    pair_t **pairs = hashtable_pairs(&object_controller.object_table, &count);
+
+    uint32_t id_count = 0;
+    uint32_t *ids = NULL;
+
+    for (uint32_t i = 0; i < count; ++i) {
+        if (!pairs[i]->value)
+            continue;
+        gameobject_t *list = *(gameobject_t **)pairs[i]->value;
+        list = gameobject_reel_back(list);
+        while (list) {
+            ids = realloc(ids, (id_count + 1) * sizeof(uint32_t));
+            ids[id_count] = list->id;
+            id_count++;
+            list = list->next;
+        }
+    }
+
+    for (uint32_t i = 0; i < id_count; ++i)
+        object_controller_delete(ids[i]);
+
+    free(ids);
+    free(pairs);
+}
+
 void object_controller_get(uint32_t id) {
     lua_getglobal(object_controller.state, "objects");
     if (!lua_istable(object_controller.state, -1)) {
@@ -539,5 +549,10 @@ int lua_object_new(lua_State *L) {
 
 int lua_object_delete(lua_State *L) {
     object_controller_delete(luaL_checkinteger(L, 1));
+    return 0;
+}
+
+int lua_object_delete_all(unused lua_State *L) {
+    object_controller_delete_all();
     return 0;
 }

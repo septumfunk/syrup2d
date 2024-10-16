@@ -2,6 +2,7 @@
 #pragma once
 #include "../data/hashtable.h"
 #include "../data/result.h"
+#include "../util/ext.h"
 #include <lua.h>
 #include <lua_all.h>
 #include <stdint.h>
@@ -45,6 +46,8 @@ void object_controller_draw(void);
 result_t object_controller_new(const char *name, float x, float y);
 /// Delete object by its id.
 void object_controller_delete(uint32_t id);
+/// Delete all objects
+void object_controller_delete_all(void);
 
 /// Push an object's table onto the stack
 void object_controller_get(uint32_t id);
@@ -61,3 +64,5 @@ int lua_object_get_all(lua_State *L);
 int lua_object_new(lua_State *L);
 /// Delete an object by id.
 int lua_object_delete(lua_State *L);
+/// Delete an object by id.
+int lua_object_delete_all(unused lua_State *L);
