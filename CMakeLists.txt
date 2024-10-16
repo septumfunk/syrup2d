@@ -4,13 +4,15 @@ set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(MSVC_RUNTIME_LIBRARY MultiThreaded)
 project(
-    rendertest
+    syrup-engine
     VERSION 0.1
     LANGUAGES C
 )
 
 # Sources
 add_executable(${PROJECT_NAME}
+    syrup-engine.rc
+
     src/main.c
 
     src/data/fs.c

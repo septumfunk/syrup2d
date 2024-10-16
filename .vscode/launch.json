@@ -8,7 +8,7 @@
             "name": "(Windows) Launch",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/rendertest.exe",
+            "program": "${workspaceFolder}/build/syrup-engine.exe",
             "preLaunchTask": "CMake Build",
             "args": [],
             "stopAtEntry": false,
