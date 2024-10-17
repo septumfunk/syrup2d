@@ -1,4 +1,5 @@
 #include "color.h"
+#include <cglm/util.h>
 #include <math.h>
 #include <stdlib.h>
 
@@ -13,9 +14,9 @@ gl_color_t color_to_gl(color_t color) {
 
 color_t gl_to_color(gl_color_t color) {
     return (color_t) {
-        .r = floor(min(255, color.r * 255)),
-        .g = floor(min(255, color.g * 255)),
-        .b = floor(min(255, color.b * 255)),
-        .a = floor(min(255, color.a * 255)),
+        .r = floor(glm_min(255, color.r * 255)),
+        .g = floor(glm_min(255, color.g * 255)),
+        .b = floor(glm_min(255, color.b * 255)),
+        .a = floor(glm_min(255, color.a * 255)),
     };
 }

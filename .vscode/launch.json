@@ -6,15 +6,24 @@
     "configurations": [
         {
             "name": "(Windows) Launch",
-            "type": "cppvsdbg",
+            "type": "lldb",
             "request": "launch",
             "program": "${workspaceFolder}/build/syrup-engine.exe",
             "preLaunchTask": "CMake Build",
-            "args": [],
-            "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
-            "environment": [],
             "console": "integratedTerminal",
         },
+        {
+        "name": "(Linux) Launch",
+        "type": "lldb",
+        "request": "launch",
+        "env": {
+            "LIBGL_ALWAYS_INDIRECT": "1",
+        },
+        "program": "${workspaceFolder}/build/syrup-engine",
+        "preLaunchTask": "CMake Build",
+        "cwd": "${workspaceFolder}",
+        "console": "externalTerminal",
+    },
     ]
 }

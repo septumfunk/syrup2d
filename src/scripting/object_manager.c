@@ -102,7 +102,7 @@ object_t *object_manager_push(object_manager_t *this, const char *type, uint32_t
     object_list_t *list = object_manager_list(this, type);
     if (!list) { // Insert list
         list = calloc(1, sizeof(object_list_t));
-        list->type = _strdup(type);
+        list->type = strdup(type);
         object_bucket_t *bucket = &this->buckets[jhash_str(type) & (this->bucket_count - 1)];
         list->next = bucket->start;
         bucket->start = list;

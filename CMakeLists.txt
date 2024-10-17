@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.29)
+cmake_minimum_required(VERSION 3.28)
 
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -47,6 +47,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/dependencies/stb/lib/stb${CMAKE_STATIC_LIBRARY_SUFFIX}
     ${CMAKE_SOURCE_DIR}/dependencies/md5/lib/md5${CMAKE_STATIC_LIBRARY_SUFFIX}
     ${CMAKE_SOURCE_DIR}/dependencies/lua5.4/lib/lua54${CMAKE_STATIC_LIBRARY_SUFFIX}
+    m
 )
 target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE
     ${CMAKE_SOURCE_DIR}/dependencies/cglm/include

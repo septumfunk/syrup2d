@@ -20,7 +20,7 @@ result_t result_error(const char *type, const char *description, ...) {
 
     return (result_t) {
         .is_error = true,
-        .type = _strdup(type),
+        .type = strdup(type),
         .description = text,
     };
 }
