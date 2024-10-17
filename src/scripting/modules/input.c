@@ -2,10 +2,15 @@
 #include "modules.h"
 #include "../../input/keyboard_mouse.h"
 #include <lauxlib.h>
+#include <lua.h>
+#include <string.h>
 
 scripting_function_t api_input_functions[] = {
     { "is_key_pressed", api_input_is_key_pressed },
-    { "is_key_down", api_input_is_key_down }
+    { "is_key_down", api_input_is_key_down },
+    { "is_mouse_button_pressed",  api_input_is_mouse_button_pressed},
+    { "is_mouse_button_down", api_input_is_mouse_button_down },
+    { "",  },
 };
 
 __attribute__((constructor)) void api_input_init(void) {
@@ -17,9 +22,29 @@ __attribute__((constructor)) void api_input_init(void) {
 }
 
 int api_input_is_key_pressed(lua_State *L) {
-    return is_key_pressed(luaL_checkinteger(L, 1));
+    lua_pushboolean(L, is_key_pressed(luaL_checkinteger(L, 1)));
+    return 1;
 }
 
 int api_input_is_key_down(lua_State *L) {
-    return is_key_down(luaL_checkinteger(L, 1));
+    lua_pushboolean(L, is_key_down(luaL_checkinteger(L, 1)));
+    return 1;
+}
+
+int api_input_is_mouse_button_pressed(lua_State *L) {
+    lua_pushboolean(L, is_mouse_button_pressed(luaL_checkinteger(L, 1)));
+    return 1;
+}
+
+int api_input_is_mouse_button_down(lua_State *L) {
+    lua_pushboolean(L, is_mouse_button_down(luaL_checkinteger(L, 1)));
+    return 1;
+}
+
+int api_input_keyboard_string(lua_State *L) {
+    char *c = keyboard_mouse.keyboard_string + KEYBOARD_STRING_COUNT - 1;
+    while (*c != '\0' && c != keyboard_mouse.keyboard_string) c--;
+    lua_pushstring(L, c);
+    memset(&keyboard_mouse.keyboard_string, 0, KEYBOARD_STRING_COUNT);
+    return 1;
 }

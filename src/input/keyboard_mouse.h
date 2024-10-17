@@ -107,14 +107,14 @@ typedef enum mouse_button_e {
     MOUSE_BUTTON_COUNT
 } mouse_button_e;
 
-/// Controller input system
+/// keyboard_mouse input system
 typedef struct keyboard_mouse_t {
     bool enabled;
     bool keys_pressed[KEY_COUNT];
     bool mouse_buttons_pressed[MOUSE_BUTTON_COUNT];
     char keyboard_string[KEYBOARD_STRING_COUNT];
 } keyboard_mouse_t;
-/// Controller system's main instance
+/// keyboard_mouse system's main instance
 extern keyboard_mouse_t keyboard_mouse;
 
 /// Initialize keyboard and mouse
