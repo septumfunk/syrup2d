@@ -1,11 +1,11 @@
+//? septumfunk 2024
 #pragma once
 #include "opengl.h"
-#include "../structures/result.h"
-#include "../structures/hashtable.h"
+#include "../data/result.h"
+#include "../data/hashtable.h"
 
-#define VERTEX_SHADER_PATH "resources/engine/shaders/%s.vert"
-#define FRAGMENT_SHADER_PATH "resources/engine/shaders/%s.frag"
-#define GLOBAL_SHADER_PATH "resources/engine/shaders/global.glsl"
+#define VERTEX_SHADER_PATH "resources/shaders/%s.vert"
+#define FRAGMENT_SHADER_PATH "resources/shaders/%s.frag"
 
 /// OpenGL shader program, conveniently wrapped
 typedef struct shader_t {
@@ -16,5 +16,9 @@ typedef struct shader_t {
     hashtable_t uniform_table;
 } shader_t;
 
+/// Load shader via name, see VERTEX_SHADER_PATH and FRAGMENT_SHADER_PATH for locations
 result_t shader_load(shader_t *out, const char *name);
+/// Delete shader and clean up resources
 void shader_delete(shader_t *this);
+/// Bind OpenGL to specified shader
+void shader_bind(shader_t *this);

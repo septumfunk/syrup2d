@@ -6,9 +6,5 @@
         "undefined-global",
         "lowercase-global",
         "redefined-local"
-    ],
-    "Lua.workspace.library": [
-        "engine/scripts/modules/*",
-        "resources/engine/scripts/modules/*"
     ]
 }

@@ -3,10 +3,5 @@
 		{
 			"path": "."
 		}
-	],
-	"settings": {
-		"Lua.workspace.library": [
-			"resources/engine/scripts/syrup/*"
-		]
-	}
+	]
 }

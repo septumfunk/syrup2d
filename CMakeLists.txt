@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.29)
 
-set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)
+set(MSVC_RUNTIME_LIBRARY MultiThreaded)
 project(
     syrup-engine
     VERSION 0.1
@@ -13,40 +14,39 @@ add_executable(${PROJECT_NAME}
     syrup-engine.rc
 
     src/main.c
-    src/engine.c
 
-    src/graphics/color.c
-    src/graphics/renderer.c
+    src/data/fs.c
+    src/data/stringext.c
+    src/data/vector.c
+    src/data/hashtable.c
+    src/data/result.c
+    src/data/crypto.c
+
     src/graphics/shader.c
+    src/graphics/color.c
+    src/graphics/sprite.c
 
-    src/input/keyboard_mouse.c
+    src/engine/engine.c
+    src/engine/controller.c
+    src/engine/window.c
+    src/engine/renderer.c
+    src/engine/sprite_manager.c
+    src/engine/object_controller.c
 
-    src/resources/fs.c
-    src/resources/resource_manager.c
-    src/resources/sprite.c
-
-    src/scripting/object_manager.c
-    src/scripting/scripting_api.c
-
-    src/scripting/modules/modules.c
-
-    src/structures/hashtable.c
-    src/structures/result.c
-
-    src/util/crypto.c
     src/util/log.c
-    src/util/msgbox.c
-    src/util/stringext.c
+
+    src/win32/msgbox.c
+    src/win32/files.c
 )
 
 # Libraries
 target_link_libraries(${PROJECT_NAME} PRIVATE
-    ${CMAKE_SOURCE_DIR}/dependencies/cglm/lib/cglm${CMAKE_STATIC_LIBRARY_SUFFIX}
-    ${CMAKE_SOURCE_DIR}/dependencies/glad/lib/glad${CMAKE_STATIC_LIBRARY_SUFFIX}
-    ${CMAKE_SOURCE_DIR}/dependencies/glfw3/lib/glfw3${CMAKE_STATIC_LIBRARY_SUFFIX}
-    ${CMAKE_SOURCE_DIR}/dependencies/stb/lib/stb${CMAKE_STATIC_LIBRARY_SUFFIX}
-    ${CMAKE_SOURCE_DIR}/dependencies/md5/lib/md5${CMAKE_STATIC_LIBRARY_SUFFIX}
-    ${CMAKE_SOURCE_DIR}/dependencies/lua5.4/lib/lua54${CMAKE_STATIC_LIBRARY_SUFFIX}
+    ${CMAKE_SOURCE_DIR}/dependencies/cglm/lib/cglm.lib
+    ${CMAKE_SOURCE_DIR}/dependencies/glad/lib/glad.lib
+    ${CMAKE_SOURCE_DIR}/dependencies/glfw3/lib/glfw3.lib
+    ${CMAKE_SOURCE_DIR}/dependencies/stb/lib/stb.lib
+    ${CMAKE_SOURCE_DIR}/dependencies/md5/lib/md5.lib
+    ${CMAKE_SOURCE_DIR}/dependencies/lua5.4/lib/lua54.lib
 )
 target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE
     ${CMAKE_SOURCE_DIR}/dependencies/cglm/include
