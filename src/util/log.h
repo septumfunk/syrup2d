@@ -1,4 +1,3 @@
-//? septumfunk 2024
 #pragma once
 
 #define ANSI_COLOR_BLACK   "\033[30m"
