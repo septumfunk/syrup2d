@@ -70,6 +70,7 @@ void scripting_api_cleanup(void) {
 }
 
 void scripting_api_update(void) {
+    scripting_api_update_globals();
     object_t *start = object_manager_get_all(&scripting_api.manager);
 
     lua_getglobal(scripting_api.state, "objects");
@@ -97,7 +98,7 @@ void scripting_api_update(void) {
             object_t *o = object_manager_get(&scripting_api.manager, object->id);
             if (o) o->depth = lua_tonumber(scripting_api.state, -1);
         }
-        lua_pop(scripting_api.state, 1);
+        lua_pop(scripting_api.state, 2);
     }
     lua_pop(scripting_api.state, 1);
 
@@ -149,6 +150,7 @@ void scripting_api_draw(void) {
                 lua_pop(scripting_api.state, 1);
             }
         } else lua_pop(scripting_api.state, 1);
+        lua_pop(scripting_api.state, 1);
     }
 
     for (object_t *object = start; object != NULL; object = object->next) {
@@ -169,6 +171,7 @@ void scripting_api_draw(void) {
                 lua_pop(scripting_api.state, 1);
             }
         } else lua_pop(scripting_api.state, 1);
+        lua_pop(scripting_api.state, 1);
     }
     lua_pop(scripting_api.state, 1);
 
@@ -196,7 +199,7 @@ result_t scripting_api_create(const char *type, float x, float y) {
 
     if (!lua_istable(scripting_api.state, -1)) {
         res = result_error("InvalidObjectError", "Object '%s' did not return a table in its code file.", type);
-        lua_pop(scripting_api.state, 2);
+        lua_pop(scripting_api.state, 1);
         goto cleanup;
     }
 
@@ -217,20 +220,14 @@ result_t scripting_api_create(const char *type, float x, float y) {
     object_t *object = object_manager_push(&scripting_api.manager, type, scripting_api.current_id++, lua_tonumber(scripting_api.state, -1));
     lua_pop(scripting_api.state, 1);
 
-    lua_pushstring(scripting_api.state, "id");
     lua_pushnumber(scripting_api.state, object->id);
-    lua_settable(scripting_api.state, -3);
-    lua_pushstring(scripting_api.state, "type");
+    lua_setfield(scripting_api.state, -2, "id");
     lua_pushstring(scripting_api.state, type);
-    lua_settable(scripting_api.state, -3);
-    lua_pushstring(scripting_api.state, "x");
+    lua_setfield(scripting_api.state, -2, "type");
     lua_pushnumber(scripting_api.state, x);
-    lua_settable(scripting_api.state, -3);
-    lua_pushstring(scripting_api.state, "y");
+    lua_setfield(scripting_api.state, -2, "x");
     lua_pushnumber(scripting_api.state, y);
-    lua_settable(scripting_api.state, -3);
-
-    lua_pop(scripting_api.state, 1);
+    lua_setfield(scripting_api.state, -2, "y");
 
     // Insert into objects
     lua_getglobal(scripting_api.state, "objects");
