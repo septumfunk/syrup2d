@@ -1,4 +1,3 @@
-//? septumfunk 2024
 #include "color.h"
 #include <math.h>
 #include <stdlib.h>

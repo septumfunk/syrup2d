@@ -1,4 +1,3 @@
-//? septumfunk 2024
 #pragma once
 #include <stdint.h>
 

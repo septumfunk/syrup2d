@@ -1,7 +1,6 @@
-//? septumfunk 2024
 #include "shader.h"
-#include "../data/stringext.h"
-#include "../data/fs.h"
+#include "../util/stringext.h"
+#include "../resources/fs.h"
 #include <glad/glad.h>
 #include <stdlib.h>
 
@@ -12,28 +11,23 @@ result_t load_shader_file(GLuint *out, int type, const char *name) {
     char *path = format(type == GL_VERTEX_SHADER ? VERTEX_SHADER_PATH : FRAGMENT_SHADER_PATH, name);
     char *source = NULL;
     if (!fs_exists(path))
-        return error("ShaderNotFoundError", "The requested shader could not be found on the filesystem.");
+        return result_error("ShaderNotFoundError", "The requested shader could not be found on the filesystem.");
 
     fs_size_t size;
-    if (fs_load(path, &source, &size).is_error)
-        return error("ShaderNotFoundError", "The requested shader's data could not be read.");
+    result_t res;
+    if ((res = fs_load(path, &source, &size)).is_error)
+        return res;
+    source = realloc(source, size + 1); // Null terminator
 
     // Prepend global
     char *global = NULL;
-    char *p = format("resources/shaders/global.glsl");
-    if (!fs_exists(p))
-        panic(error("AssetsCorruptError", "Global shader data is missing. Assets are corrupted."));
-    if (fs_load(p, &global, &size).is_error)
-        panic(error("AssetsCorruptError", "Global shader data is missing. Assets are corrupted."));
-    free(p);
+    if (!fs_exists(GLOBAL_SHADER_PATH) || fs_load(GLOBAL_SHADER_PATH, &global, &size).is_error)
+        panic(result_error("AssetsCorruptError", "Global shader data is missing. Assets are corrupted."));
 
     char *osrs = source;
     source = format(osrs, global);
     free(osrs);
-    osrs = source;
-    source = format("%s\0", osrs);
     free(global);
-    free(osrs);
 
     // Compile
     glShaderSource(*out, 1, (const GLchar *const *)&source, NULL);
@@ -44,12 +38,12 @@ result_t load_shader_file(GLuint *out, int type, const char *name) {
     if (!success) {
         char log[512];
         glGetShaderInfoLog(*out, 512, NULL, log);
-        panic(error("Fatal OpenGL Error", format("Failed to compile shader \"%s.%s\"!\n%s", name, type == GL_VERTEX_SHADER ? "vert" : "frag", log)));
+        panic(result_error("Fatal OpenGL Error", format("Failed to compile shader \"%s.%s\"!\n%s", name, type == GL_VERTEX_SHADER ? "vert" : "frag", log)));
     }
 
     free(path);
     free(source);
-    return no_error();
+    return result_no_error();
 }
 
 result_t shader_load(shader_t *out, const char *name) {
@@ -70,7 +64,7 @@ result_t shader_load(shader_t *out, const char *name) {
     if (!success) {
         char log[512];
         glGetProgramInfoLog(out->program, 512, NULL, log);
-        panic(error("Fatal OpenGL Error", format("Failed to link shader \"%s\"!\n%s", name, log)));
+        panic(result_error("Fatal OpenGL Error", "Failed to link shader \"%s\"!\n%s", name, log));
     }
 
     // VAO & VBO
@@ -80,7 +74,7 @@ result_t shader_load(shader_t *out, const char *name) {
     // Uniform table
     out->uniform_table = hashtable_string();
 
-    return no_error();
+    return result_no_error();
 }
 
 void shader_bind(shader_t *this) {

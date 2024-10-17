@@ -1,9 +1,16 @@
+#include "msgbox.h"
 #include "log.h"
-#include <stdarg.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+#endif
 
-void log_info(const char *format, ...) {
+void msgbox_info(const char *title, const char *format, ...) {
+
     va_list arglist;
 
     va_start(arglist, format);
@@ -16,11 +23,15 @@ void log_info(const char *format, ...) {
     vsnprintf(text, size + 1, format, arglist);
     va_end(arglist);
 
-    printf(INFO_LOG_FORMAT, text);
+    #ifdef _WIN32
+    MessageBox(NULL, text, title, MB_OK | MB_ICONINFORMATION);
+    #else
+    log_info("%s: %s", title, text);
+    #endif
     free(text);
 }
 
-void log_warn(const char *format, ...) {
+void msgbox_warn(const char *title, const char *format, ...) {
     va_list arglist;
 
     va_start(arglist, format);
@@ -33,11 +44,15 @@ void log_warn(const char *format, ...) {
     vsnprintf(text, size + 1, format, arglist);
     va_end(arglist);
 
-    printf(INFO_WARN_FORMAT, text);
+    #ifdef _WIN32
+    MessageBox(NULL, text, title, MB_OK | MB_ICONWARNING);
+    #else
+    log_warn("%s: %s", title, text);
+    #endif
     free(text);
 }
 
-void log_error(const char *format, ...) {
+void msgbox_error(const char *title, const char *format, ...) {
     va_list arglist;
 
     va_start(arglist, format);
@@ -50,6 +65,10 @@ void log_error(const char *format, ...) {
     vsnprintf(text, size + 1, format, arglist);
     va_end(arglist);
 
-    printf(INFO_ERROR_FORMAT, text);
+    #ifdef _WIN32
+    MessageBox(NULL, text, title, MB_OK | MB_ICONERROR);
+    #else
+    log_error("%s: %s", title, text);
+    #endif
     free(text);
 }

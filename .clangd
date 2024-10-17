@@ -1,7 +1,7 @@
 CompileFlags:
     CompilationDatabase: build/
     Add: [
-        -std=c23,
+        -std=c99,
         -xc,
     ]
     Compiler: clang

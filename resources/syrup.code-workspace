@@ -6,7 +6,7 @@
 	],
 	"settings": {
 		"Lua.workspace.library": [
-			"resources/engine/scripts/syrup/*"
+			"engine/scripts/syrup/*"
 		]
 	}
 }
