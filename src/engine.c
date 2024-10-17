@@ -1,4 +1,5 @@
 #include "engine.h"
+#include "graphics/color.h"
 #include "graphics/renderer.h"
 #include "input/keyboard_mouse.h"
 #include "resources/resource_manager.h"

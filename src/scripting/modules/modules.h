@@ -2,6 +2,8 @@
 #include <lua.h>
 #include <stdint.h>
 
+#define module_function(module, function)
+
 typedef struct scripting_function_t {
     const char *name;
     lua_CFunction function;
@@ -14,6 +16,7 @@ typedef struct scripting_module_t {
 } scripting_module_t;
 
 typedef enum scripting_modules_e {
+    SCRIPTING_MODULE_INPUT,
     SCRIPTING_MODULES_COUNT,
 } scripting_modules_e;
 

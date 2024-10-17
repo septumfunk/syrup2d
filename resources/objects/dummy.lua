@@ -1,5 +1,11 @@
+require("syrup")
+
 return {
-    start = function(this)
-        io.write("Start\n")
+    super_awesome_message = "Go fuck yourself!\n",
+
+    update = function(this)
+        if syrup.input.is_key_down(key.space) then
+            io.write(this.super_awesome_message)
+        end
     end,
 }

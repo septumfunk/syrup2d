@@ -124,17 +124,13 @@ void keyboard_mouse_reset(void);
 
 /// Checks if key has been pressed this frame.
 bool is_key_pressed(key_e key);
-int lua_is_key_pressed(lua_State *L);
 /// Checks if key is currently held down.
 bool is_key_down(key_e key);
-int lua_is_key_down(lua_State *L);
 
 /// Checks if mouse button has been pressed this frame.
 bool is_mouse_button_pressed(mouse_button_e mouse_button);
-int lua_is_mouse_button_pressed(lua_State *L);
 /// Checks if mouse button is down.
 bool is_mouse_button_down(mouse_button_e mouse_button);
-int lua_is_mouse_button_down(lua_State *L);
 
 /// Default GLFW keyboard callback. Sets keys_pressed.
 void _controller_keyboard_cb(unused GLFWwindow* handle, int key, unused int scancode, int action, unused int mods);

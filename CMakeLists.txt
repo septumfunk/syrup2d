@@ -29,6 +29,7 @@ add_executable(${PROJECT_NAME}
     src/scripting/scripting_api.c
 
     src/scripting/modules/modules.c
+    src/scripting/modules/input.c
 
     src/structures/hashtable.c
     src/structures/result.c

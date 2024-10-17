@@ -26,7 +26,10 @@ void scripting_api_init(void) {
 void scripting_api_init_state(void) {
     scripting_api.state = luaL_newstate();
     luaL_openlibs(scripting_api.state);
-    luaL_dostring(scripting_api.state, "package.path = package.path .. ';resources/scripts/?.lua;resources/engine/scripts/?.lua'");
+    luaL_dostring(
+        scripting_api.state,
+        "package.path = package.path .. ';resources/scripts/?.lua;resources/engine/scripts/?.lua;resources/scripts/?/init.lua;resources/engine/scripts/?/init.lua'"
+    );
 }
 
 void scripting_api_init_globals(void) {
@@ -49,13 +52,15 @@ void scripting_api_init_globals(void) {
 void scripting_api_init_modules(void) {
     lua_getglobal(scripting_api.state, "syrup");
     for (scripting_module_t *module = scripting_modules; module < scripting_modules + SCRIPTING_MODULES_COUNT; ++module) {
-        log_info("Registering module '%s'.", module->name);
+        if (!module->name || !module->functions)
+            continue;
+        log_info("Registering module '%s'", module->name);
         lua_newtable(scripting_api.state);
         lua_setfield(scripting_api.state, -2, module->name);
         lua_getfield(scripting_api.state, -1, module->name);
 
         for (scripting_function_t *func = module->functions; func < module->functions + module->function_count; ++func) {
-            log_info("Registering function '%s'.", module->name);
+            log_info("Registering function '%s'", func->name);
             lua_pushcfunction(scripting_api.state, func->function);
             lua_setfield(scripting_api.state, -2, func->name);
         }
@@ -87,8 +92,8 @@ void scripting_api_update(void) {
         lua_getfield(scripting_api.state, -1, "update");
         if (lua_isfunction(scripting_api.state, -1)) {
             lua_pushvalue(scripting_api.state, -2);
-            if (lua_pcall(scripting_api.state, 1, 0, 0) != 0) {
-                log_error(lua_tostring(scripting_api.state, 1));
+            if (lua_pcall(scripting_api.state, 1, 0, 0) != LUA_OK) {
+                log_error(lua_tostring(scripting_api.state, -1));
                 lua_pop(scripting_api.state, 1);
             }
         } else lua_pop(scripting_api.state, 1);
@@ -145,8 +150,8 @@ void scripting_api_draw(void) {
         lua_getfield(scripting_api.state, -1, "draw");
         if (lua_isfunction(scripting_api.state, -1)) {
             lua_pushvalue(scripting_api.state, -2);
-            if (lua_pcall(scripting_api.state, 1, 0, 0) != 0) {
-                log_error(lua_tostring(scripting_api.state, 1));
+            if (lua_pcall(scripting_api.state, 1, 0, 0) != LUA_OK) {
+                log_error(lua_tostring(scripting_api.state, -1));
                 lua_pop(scripting_api.state, 1);
             }
         } else lua_pop(scripting_api.state, 1);
@@ -166,8 +171,8 @@ void scripting_api_draw(void) {
         lua_getfield(scripting_api.state, -1, "draw_gui");
         if (lua_isfunction(scripting_api.state, -1)) {
             lua_pushvalue(scripting_api.state, -2);
-            if (lua_pcall(scripting_api.state, 1, 0, 0) != 0) {
-                log_error(lua_tostring(scripting_api.state, 1));
+            if (lua_pcall(scripting_api.state, 1, 0, 0) != LUA_OK) {
+                log_error(lua_tostring(scripting_api.state, -1));
                 lua_pop(scripting_api.state, 1);
             }
         } else lua_pop(scripting_api.state, 1);
@@ -244,7 +249,7 @@ result_t scripting_api_create(const char *type, float x, float y) {
     }
     lua_pushvalue(scripting_api.state, -2);
     if (lua_pcall(scripting_api.state, 1, 0, 0) != 0) {
-        log_error(lua_tostring(scripting_api.state, 1));
+        log_error(lua_tostring(scripting_api.state, -1));
         lua_pop(scripting_api.state, 1);
     }
 cleanup:

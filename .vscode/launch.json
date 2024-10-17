@@ -6,7 +6,7 @@
     "configurations": [
         {
             "name": "(Windows) Launch",
-            "type": "lldb",
+            "type": "cppvsdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/syrup-engine.exe",
             "preLaunchTask": "CMake Build",
