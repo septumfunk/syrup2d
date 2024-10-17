@@ -16,6 +16,7 @@ typedef struct scripting_module_t {
 } scripting_module_t;
 
 typedef enum scripting_modules_e {
+    SCRIPTING_MODULE_GRAPHICS,
     SCRIPTING_MODULE_INPUT,
     SCRIPTING_MODULES_COUNT,
 } scripting_modules_e;

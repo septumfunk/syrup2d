@@ -6,6 +6,7 @@
 #include "../graphics/renderer.h"
 #include "../util/log.h"
 #include "../util/stringext.h"
+#include <lauxlib.h>
 #include <lua.h>
 #include <stdint.h>
 #include <string.h>
@@ -35,16 +36,19 @@ void scripting_api_init_state(void) {
 void scripting_api_init_globals(void) {
     lua_newtable(scripting_api.state);
     lua_setglobal(scripting_api.state, "syrup");
-
-    lua_newtable(scripting_api.state);
-    lua_setglobal(scripting_api.state, "objects");
+    lua_getglobal(scripting_api.state, "syrup");
 
     lua_newtable(scripting_api.state);
     lua_pushnumber(scripting_api.state, resource_manager.game_data.height);
     lua_setfield(scripting_api.state, -2, "width");
     lua_pushnumber(scripting_api.state, resource_manager.game_data.height);
     lua_setfield(scripting_api.state, -2, "height");
-    lua_setglobal(scripting_api.state, "dimensions");
+    lua_setfield(scripting_api.state, -2, "dimensions");
+
+    lua_newtable(scripting_api.state);
+    lua_setfield(scripting_api.state, -2, "objects");
+    lua_newtable(scripting_api.state);
+    lua_setfield(scripting_api.state, -2, "instances");
 
     scripting_api_update_globals();
 }
@@ -78,10 +82,15 @@ void scripting_api_update(void) {
     scripting_api_update_globals();
     object_t *start = object_manager_get_all(&scripting_api.manager);
 
-    lua_getglobal(scripting_api.state, "objects");
+    lua_getglobal(scripting_api.state, "syrup");
+    lua_getfield(scripting_api.state, -1, "instances");
     for (object_t *object = start; object != NULL; object = object->next) {
         lua_pushinteger(scripting_api.state, object->id);
         lua_gettable(scripting_api.state, -2);
+
+        lua_getfield(scripting_api.state, -1, "__index");
+        if (!lua_istable(scripting_api.state, -1))
+            return;
 
         if (!lua_istable(scripting_api.state, -1)) {
             lua_pop(scripting_api.state, 1);
@@ -97,6 +106,7 @@ void scripting_api_update(void) {
                 lua_pop(scripting_api.state, 1);
             }
         } else lua_pop(scripting_api.state, 1);
+        lua_pop(scripting_api.state, 1);
 
         lua_getfield(scripting_api.state, -1, "depth");
         if (lua_isnumber(scripting_api.state, -1)) {
@@ -105,38 +115,38 @@ void scripting_api_update(void) {
         }
         lua_pop(scripting_api.state, 2);
     }
-    lua_pop(scripting_api.state, 1);
+    lua_pop(scripting_api.state, 2);
 
     object_list_t list = (object_list_t) { .start = start, };
     object_list_delete(&list);
 }
 
 void scripting_api_update_globals(void) {
+    lua_getglobal(scripting_api.state, "syrup");
     lua_pushnumber(scripting_api.state, renderer.delta_time);
-    lua_setglobal(scripting_api.state, "delta_time");
+    lua_setfield(scripting_api.state, -2, "delta_time");
 
-    lua_getglobal(scripting_api.state, "mouse");
+    lua_getfield(scripting_api.state, -1, "mouse");
     if (lua_isnil(scripting_api.state, -1)) {
         lua_pop(scripting_api.state, 1);
         lua_newtable(scripting_api.state);
-        lua_setglobal(scripting_api.state, "mouse");
-        lua_getglobal(scripting_api.state, "mouse");
+        lua_setfield(scripting_api.state, -2, "mouse");
+        lua_getfield(scripting_api.state, -1, "mouse");
     }
     double x, y;
     renderer_fbo_mouse_position(&x, &y);
-    lua_pushstring(scripting_api.state, "x");
     lua_pushnumber(scripting_api.state, x);
-    lua_settable(scripting_api.state, -3);
-    lua_pushstring(scripting_api.state, "y");
+    lua_setfield(scripting_api.state, -2, "x");
     lua_pushnumber(scripting_api.state, y);
-    lua_settable(scripting_api.state, -3);
-    lua_pop(scripting_api.state, 1);
+    lua_setfield(scripting_api.state, -2, "y");
+    lua_pop(scripting_api.state, 2);
 }
 
 void scripting_api_draw(void) {
     object_t *start = object_manager_get_all(&scripting_api.manager);
 
-    lua_getglobal(scripting_api.state, "objects");
+    lua_getglobal(scripting_api.state, "syrup");
+    lua_getfield(scripting_api.state, -1, "instances");
     for (object_t *object = start; object != NULL; object = object->next) {
         lua_pushinteger(scripting_api.state, object->id);
         lua_gettable(scripting_api.state, -2);
@@ -178,35 +188,51 @@ void scripting_api_draw(void) {
         } else lua_pop(scripting_api.state, 1);
         lua_pop(scripting_api.state, 1);
     }
-    lua_pop(scripting_api.state, 1);
+    lua_pop(scripting_api.state, 2);
 
     object_list_t list = (object_list_t) { .start = start, };
     object_list_delete(&list);
 }
 
 result_t scripting_api_create(const char *type, float x, float y) {
-    result_t res = result_no_error();
-    char *path = format("resources/objects/%s.lua", type);
-
-    if (!fs_exists(path))
-        path = format("resources/engine/objects/%s.lua", type);
-
-    if (!fs_exists(path)) {
-        res = result_error("ObjectNotFoundError", "The object '%s' could not be loaded because it could not be found.", type);
-        goto cleanup;
-    }
-
-    if (luaL_dofile(scripting_api.state, path) != 0) {
-        res = result_error("ObjectCodeError", lua_tostring(scripting_api.state, -1));
-        lua_pop(scripting_api.state, 1);
-        goto cleanup;
-    }
-
+    lua_getglobal(scripting_api.state, "syrup");
+    lua_getfield(scripting_api.state, -1, "objects");
+    lua_getfield(scripting_api.state, -1, type);
     if (!lua_istable(scripting_api.state, -1)) {
-        res = result_error("InvalidObjectError", "Object '%s' did not return a table in its code file.", type);
         lua_pop(scripting_api.state, 1);
-        goto cleanup;
+
+        char *path = format("resources/objects/%s.lua", type);
+        if (!fs_exists(path))
+            path = format("resources/engine/objects/%s.lua", type);
+        if (!fs_exists(path))
+            return result_error("ObjectNotFoundError", "The object '%s' could not be loaded because it could not be found.", type);
+
+        if (luaL_dofile(scripting_api.state, path) != 0) {
+            result_t res = result_error("ObjectCodeError", lua_tostring(scripting_api.state, -1));
+            lua_pop(scripting_api.state, 2);
+            free(path);
+            return res;
+        }
+        if (!lua_istable(scripting_api.state, -1)) {
+            result_t res = result_error("InvalidObjectError", "Object '%s' did not return a table in its code file.", type);
+            lua_pop(scripting_api.state, 2);
+            free(path);
+            return res;
+        }
+
+        lua_pushvalue(scripting_api.state, -1);
+        lua_setfield(scripting_api.state, -2, "__index");
+        lua_pushvalue(scripting_api.state, -1);
+        lua_setfield(scripting_api.state, -3, type);
     }
+
+    // Instantiate
+    lua_newtable(scripting_api.state); // Object
+    lua_pushvalue(scripting_api.state, -2);
+    lua_setmetatable(scripting_api.state, -2);
+    lua_remove(scripting_api.state, -2);
+    lua_remove(scripting_api.state, -3);
+    lua_remove(scripting_api.state, -4);
 
     if (scripting_api.manager.list_count >= 4294967295)
         panic(result_error("ObjectOverflowError", "Object count exceeded maximum unsigned integer limit. How did you even manage to do that, dude?"))\
@@ -234,25 +260,24 @@ result_t scripting_api_create(const char *type, float x, float y) {
     lua_pushnumber(scripting_api.state, y);
     lua_setfield(scripting_api.state, -2, "y");
 
-    // Insert into objects
-    lua_getglobal(scripting_api.state, "objects");
+    // Insert into instances
+    lua_getglobal(scripting_api.state, "syrup");
+    lua_getfield(scripting_api.state, -1, "instances");
     lua_pushinteger(scripting_api.state, object->id);
-    lua_pushvalue(scripting_api.state, -3);
+    lua_pushvalue(scripting_api.state, -4);
     lua_settable(scripting_api.state, -3);
-    lua_pop(scripting_api.state, 1);
+    lua_pop(scripting_api.state, 2);
 
     // Call start
     lua_getfield(scripting_api.state, -1, "start");
     if (!lua_isfunction(scripting_api.state, -1)) {
         lua_pop(scripting_api.state, 1);
-        goto cleanup;
+        return result_no_error();
     }
     lua_pushvalue(scripting_api.state, -2);
     if (lua_pcall(scripting_api.state, 1, 0, 0) != 0) {
         log_error(lua_tostring(scripting_api.state, -1));
         lua_pop(scripting_api.state, 1);
     }
-cleanup:
-    free(path);
-    return res;
+    return result_no_error();
 }

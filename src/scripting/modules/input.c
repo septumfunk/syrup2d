@@ -10,7 +10,7 @@ scripting_function_t api_input_functions[] = {
     { "is_key_down", api_input_is_key_down },
     { "is_mouse_button_pressed",  api_input_is_mouse_button_pressed},
     { "is_mouse_button_down", api_input_is_mouse_button_down },
-    { "",  },
+    { "keyboard_string", api_input_keyboard_string },
 };
 
 __attribute__((constructor)) void api_input_init(void) {
