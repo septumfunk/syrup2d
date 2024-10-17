@@ -5,7 +5,7 @@ return {
         self:log()
     end,
 
-    log = function(self)
+    log = function(_)
         io.write("yeah\n")
     end,
 }

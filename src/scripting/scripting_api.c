@@ -228,6 +228,12 @@ result_t scripting_api_create(const char *type, float x, float y) {
 
     // Instantiate
     lua_newtable(scripting_api.state); // Object
+    lua_pushnil(scripting_api.state);
+    while(lua_next(scripting_api.state, -2) != 0) {
+        lua_pushvalue(L, -2);
+        lua_insert(L, -2);
+        lua_settable(L, -4);
+    }
     lua_pushvalue(scripting_api.state, -2);
     lua_setmetatable(scripting_api.state, -2);
     lua_remove(scripting_api.state, -2);
