@@ -8,6 +8,7 @@ return {
     speed = 10,
     damping = 50,
     hovering = false,
+    color = { r = 255, g = 125, b = 125, a = 255 },
 
     update = function(self)
         self.hovering = syrup.mouse.x > self.x
@@ -44,9 +45,9 @@ return {
             self.velocity.y = self.velocity.y - self.gravity * syrup.delta_time
         else
             self.y = syrup.dimensions.height - self.size.height
-            self.velocity.y = -(self.velocity.y / 2.5)
-            if self.velocity.y < 0.1 then
-                self.velocity.y = 0
+            if self.velocity.y < 0 then
+                self.velocity.y = -(self.velocity.y / 1.5)
+                self.color = { r = math.random(255), g = math.random(255), b = math.random(255), a = 255 }
             end
             if self.velocity.y == 0 then
                 self.velocity.x = approach(self.velocity.x, 0, self.damping * syrup.delta_time)
@@ -57,7 +58,8 @@ return {
         if self.y < 0 then
             self.y = 0
             if self.velocity.y > 0 then
-                self.velocity.y = -(self.velocity.y / 2.5)
+                self.velocity.y = -(self.velocity.y / 1.5)
+                self.color = { r = math.random(255), g = math.random(255), b = math.random(255), a = 255 }
             end
         end
 
@@ -65,7 +67,8 @@ return {
         if self.x < 0 then
             self.x = 0
             if self.velocity.x < 0 then
-                self.velocity.x = -(self.velocity.x / 2.5)
+                self.velocity.x = -(self.velocity.x / 1.5)
+                self.color = { r = math.random(255), g = math.random(255), b = math.random(255), a = 255 }
             end
         end
 
@@ -73,12 +76,13 @@ return {
         if self.x > syrup.dimensions.width - self.size.width then
             self.x = syrup.dimensions.width - self.size.width
             if self.velocity.x > 0 then
-                self.velocity.x = -(self.velocity.x / 2.5)
+                self.velocity.x = -(self.velocity.x / 1.5)
+                self.color = { r = math.random(255), g = math.random(255), b = math.random(255), a = 255 }
             end
         end
     end,
 
     draw_gui = function(self)
-        syrup.graphics.draw_rectangle(self.x, self.y, self.size.width, self.size.height, { r = 255, g = 125, b = 125, a = 255 })
+        syrup.graphics.draw_rectangle(self.x, self.y, self.size.width, self.size.height, self.color)
     end,
 }
