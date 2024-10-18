@@ -1,5 +1,4 @@
-require("ui.info")
-require("engine.mathutil")
+require("syrup")
 
 return {
     depth = 5,
@@ -10,80 +9,76 @@ return {
     damping = 50,
     hovering = false,
 
-    update = function(this)
-        this.hovering = mouse.x > this.x
-        and mouse.x < this.x + this.size.width
-        and mouse.y > this.y
-        and mouse.y < this.y + this.size.height
+    update = function(self)
+        self.hovering = syrup.mouse.x > self.x
+        and syrup.mouse.x < self.x + self.size.width
+        and syrup.mouse.y > self.y
+        and syrup.mouse.y < self.y + self.size.height
 
-        if this.offset ~= nil then
-            local dx = ((mouse.x - this.offset.x) - this.x)
-            local dy = ((mouse.y - this.offset.y) - this.y)
-            this.velocity.x = this.speed * dx
-            this.velocity.y = this.speed * -dy
-            this.x = this.x + this.velocity.x * delta_time
-            this.y = this.y - this.velocity.y * delta_time
+        if self.offset ~= nil then
+            local dx = ((syrup.mouse.x - self.offset.x) - self.x)
+            local dy = ((syrup.mouse.y - self.offset.y) - self.y)
+            self.velocity.x = self.speed * dx
+            self.velocity.y = self.speed * -dy
+            self.x = self.x + self.velocity.x * syrup.delta_time
+            self.y = self.y - self.velocity.y * syrup.delta_time
 
-            if not is_mouse_button_down(mouse_button.left) then
-                this.offset = nil
+            if not syrup.input.is_mouse_button_down(mouse_button.left) then
+                self.offset = nil
             end
             return
         end
 
-        if this.hovering then
-            if is_mouse_button_pressed(mouse_button.left) then
-                this.offset = { x = mouse.x - this.x, y = mouse.y - this.y }
-                return
-            end
-            if is_mouse_button_pressed(mouse_button.right) then
-                object_delete(this.id)
+        if self.hovering then
+            if syrup.input.is_mouse_button_pressed(mouse_button.left) then
+                self.offset = { x = syrup.mouse.x - self.x, y = syrup.mouse.y - self.y }
                 return
             end
         end
 
-        this.x = this.x + this.velocity.x * delta_time
-        this.y = this.y - this.velocity.y * delta_time
+        self.x = self.x + self.velocity.x * syrup.delta_time
+        self.y = self.y - self.velocity.y * syrup.delta_time
 
         -- Bottom & Gravity
-        if this.y < dimensions.height - this.size.height then
-            this.velocity.y = this.velocity.y - this.gravity * delta_time
+        if self.y < syrup.dimensions.height - self.size.height then
+            self.velocity.y = self.velocity.y - self.gravity * syrup.delta_time
         else
-            this.y = dimensions.height - this.size.height
-            this.velocity.y = -(this.velocity.y / 2.5)
-            if this.velocity.y < 0.1 then
-                this.velocity.y = 0
+            self.y = syrup.dimensions.height - self.size.height
+            self.velocity.y = -(self.velocity.y / 2.5)
+            if self.velocity.y < 0.1 then
+                self.velocity.y = 0
             end
-            if this.velocity.y == 0 then
-                this.velocity.x = approach(this.velocity.x, 0, this.damping * delta_time)
+            if self.velocity.y == 0 then
+                self.velocity.x = approach(self.velocity.x, 0, self.damping * syrup.delta_time)
             end
         end
 
         -- Top
-        if this.y < 0 then
-            this.y = 0
-            if this.velocity.y > 0 then
-                this.velocity.y = -(this.velocity.y / 2.5)
+        if self.y < 0 then
+            self.y = 0
+            if self.velocity.y > 0 then
+                self.velocity.y = -(self.velocity.y / 2.5)
             end
         end
 
         -- Left
-        if this.x < 0 then
-            this.x = 0
-            if this.velocity.x < 0 then
-                this.velocity.x = -(this.velocity.x / 2.5)
+        if self.x < 0 then
+            self.x = 0
+            if self.velocity.x < 0 then
+                self.velocity.x = -(self.velocity.x / 2.5)
             end
         end
 
         -- Right
-        if this.x > dimensions.width - this.size.width then
-            this.x = dimensions.width - this.size.width
-            if this.velocity.x > 0 then
-                this.velocity.x = -(this.velocity.x / 2.5)
+        if self.x > syrup.dimensions.width - self.size.width then
+            self.x = syrup.dimensions.width - self.size.width
+            if self.velocity.x > 0 then
+                self.velocity.x = -(self.velocity.x / 2.5)
             end
         end
     end,
 
-    draw_gui = function(this)
-        draw_rectangle(this.x, this.y, this.size.width, this.size.height, ui_red)
+    draw_gui = function(self)
+        syrup.graphics.draw_rectangle(self.x, self.y, self.size.width, self.size.height, { r = 255, g = 125, b = 125, a = 255 })
     end,
 }

@@ -11,9 +11,9 @@ scripting_function_t api_graphics_functions[] = {
     { "draw_sprite_tint",  api_graphics_draw_sprite_tint },
 };
 
-__attribute__((constructor)) void api_input_init(void) {
+__attribute__((constructor)) void api_graphics_init(void) {
     scripting_modules[SCRIPTING_MODULE_GRAPHICS] = (scripting_module_t) {
-        .name = "input",
+        .name = "graphics",
         .function_count = sizeof(api_graphics_functions) / sizeof(scripting_function_t),
         .functions = api_graphics_functions,
     };

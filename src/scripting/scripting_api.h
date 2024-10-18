@@ -21,4 +21,9 @@ void scripting_api_update(void);
 void scripting_api_update_globals(void);
 void scripting_api_draw(void);
 
+result_t scripting_api_push(const char *type, float x, float y);
 result_t scripting_api_create(const char *type, float x, float y);
+
+void scripting_api_copy_table(void);
+result_t scripting_api_cache_load(const char *type);
+void scripting_api_dump_stack(void);

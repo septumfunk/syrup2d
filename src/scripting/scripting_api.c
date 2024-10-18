@@ -9,6 +9,8 @@
 #include <lauxlib.h>
 #include <lua.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 scripting_api_t scripting_api;
@@ -39,7 +41,7 @@ void scripting_api_init_globals(void) {
     lua_getglobal(scripting_api.state, "syrup");
 
     lua_newtable(scripting_api.state);
-    lua_pushnumber(scripting_api.state, resource_manager.game_data.height);
+    lua_pushnumber(scripting_api.state, resource_manager.game_data.width);
     lua_setfield(scripting_api.state, -2, "width");
     lua_pushnumber(scripting_api.state, resource_manager.game_data.height);
     lua_setfield(scripting_api.state, -2, "height");
@@ -49,6 +51,8 @@ void scripting_api_init_globals(void) {
     lua_setfield(scripting_api.state, -2, "objects");
     lua_newtable(scripting_api.state);
     lua_setfield(scripting_api.state, -2, "instances");
+
+    lua_pop(scripting_api.state, 2);
 
     scripting_api_update_globals();
 }
@@ -88,10 +92,6 @@ void scripting_api_update(void) {
         lua_pushinteger(scripting_api.state, object->id);
         lua_gettable(scripting_api.state, -2);
 
-        lua_getfield(scripting_api.state, -1, "__index");
-        if (!lua_istable(scripting_api.state, -1))
-            return;
-
         if (!lua_istable(scripting_api.state, -1)) {
             lua_pop(scripting_api.state, 1);
             // TODO: Delete it
@@ -106,7 +106,6 @@ void scripting_api_update(void) {
                 lua_pop(scripting_api.state, 1);
             }
         } else lua_pop(scripting_api.state, 1);
-        lua_pop(scripting_api.state, 1);
 
         lua_getfield(scripting_api.state, -1, "depth");
         if (lua_isnumber(scripting_api.state, -1)) {
@@ -168,6 +167,8 @@ void scripting_api_draw(void) {
         lua_pop(scripting_api.state, 1);
     }
 
+    renderer.gui = true;
+    renderer_update_buffer();
     for (object_t *object = start; object != NULL; object = object->next) {
         lua_pushinteger(scripting_api.state, object->id);
         lua_gettable(scripting_api.state, -2);
@@ -188,57 +189,57 @@ void scripting_api_draw(void) {
         } else lua_pop(scripting_api.state, 1);
         lua_pop(scripting_api.state, 1);
     }
+    renderer.gui = false;
+    renderer_update_buffer();
     lua_pop(scripting_api.state, 2);
 
     object_list_t list = (object_list_t) { .start = start, };
     object_list_delete(&list);
 }
 
-result_t scripting_api_create(const char *type, float x, float y) {
-    lua_getglobal(scripting_api.state, "syrup");
-    lua_getfield(scripting_api.state, -1, "objects");
-    lua_getfield(scripting_api.state, -1, type);
-    if (!lua_istable(scripting_api.state, -1)) {
-        lua_pop(scripting_api.state, 1);
-
-        char *path = format("resources/objects/%s.lua", type);
-        if (!fs_exists(path))
-            path = format("resources/engine/objects/%s.lua", type);
-        if (!fs_exists(path))
-            return result_error("ObjectNotFoundError", "The object '%s' could not be loaded because it could not be found.", type);
-
-        if (luaL_dofile(scripting_api.state, path) != 0) {
-            result_t res = result_error("ObjectCodeError", lua_tostring(scripting_api.state, -1));
-            lua_pop(scripting_api.state, 2);
-            free(path);
+result_t scripting_api_push(const char *type, float x, float y) {
+    hashtable_t inherited = hashtable_string();
+    bool t = true;
+    char *to_load = _strdup(type);
+    hashtable_insert(&inherited, (void *)type, &t, sizeof(bool));
+    uint32_t to_pop = 0;
+    while (true) {
+        result_t res = scripting_api_cache_load(to_load);
+        if (res.is_error) {
+            free(to_load);
             return res;
         }
-        if (!lua_istable(scripting_api.state, -1)) {
-            result_t res = result_error("InvalidObjectError", "Object '%s' did not return a table in its code file.", type);
-            lua_pop(scripting_api.state, 2);
-            free(path);
-            return res;
+        scripting_api_copy_table();
+
+        lua_remove(scripting_api.state, -2); // Cache
+
+        if (to_pop) {
+            lua_newtable(scripting_api.state);
+            lua_pushvalue(scripting_api.state, -2);
+            lua_setfield(scripting_api.state, -2, "__index");
+            lua_setmetatable(scripting_api.state, -3);
         }
+        to_pop++;
 
-        lua_pushvalue(scripting_api.state, -1);
-        lua_setfield(scripting_api.state, -2, "__index");
-        lua_pushvalue(scripting_api.state, -1);
-        lua_setfield(scripting_api.state, -3, type);
-    }
+        // Single Inheritance
+        lua_getfield(scripting_api.state, -1, "extends");
+        if (lua_tostring(scripting_api.state, -1)) {
+            const char *extends = lua_tostring(scripting_api.state, -1);
 
-    // Instantiate
-    lua_newtable(scripting_api.state); // Object
-    lua_pushnil(scripting_api.state);
-    while(lua_next(scripting_api.state, -2) != 0) {
-        lua_pushvalue(L, -2);
-        lua_insert(L, -2);
-        lua_settable(L, -4);
+            if (hashtable_get(&inherited, (void *)extends))
+                panic(result_error("CircularImportError", "Object '%s' inherits itself somewhere along the hierarchy.", extends));
+            hashtable_insert(&inherited, (void *)type, &t, sizeof(bool));
+
+            free(to_load);
+            to_load = _strdup(extends);
+            lua_pop(scripting_api.state, 1); // "extends"
+            continue;
+        }
+        lua_pop(scripting_api.state, to_pop);
+        hashtable_delete(&inherited);
+        free(to_load);
+        break;
     }
-    lua_pushvalue(scripting_api.state, -2);
-    lua_setmetatable(scripting_api.state, -2);
-    lua_remove(scripting_api.state, -2);
-    lua_remove(scripting_api.state, -3);
-    lua_remove(scripting_api.state, -4);
 
     if (scripting_api.manager.list_count >= 4294967295)
         panic(result_error("ObjectOverflowError", "Object count exceeded maximum unsigned integer limit. How did you even manage to do that, dude?"))\
@@ -286,4 +287,82 @@ result_t scripting_api_create(const char *type, float x, float y) {
         lua_pop(scripting_api.state, 1);
     }
     return result_no_error();
+}
+
+result_t scripting_api_create(const char *type, float x, float y) {
+    result_t res = scripting_api_push(type, x, y);
+    if (res.is_error)
+        return res;
+    lua_pop(scripting_api.state, 1);
+    return result_no_error();
+}
+
+void scripting_api_copy_table(void) {
+    lua_newtable(scripting_api.state); // Object
+    lua_pushnil(scripting_api.state);
+    while(lua_next(scripting_api.state, -3) != 0) {
+        lua_pushvalue(scripting_api.state, -2);
+        lua_insert(scripting_api.state, -2);
+        lua_settable(scripting_api.state, -4);
+    }
+}
+
+result_t scripting_api_cache_load(const char *type) {
+    lua_getglobal(scripting_api.state, "syrup");
+    lua_getfield(scripting_api.state, -1, "objects");
+    lua_getfield(scripting_api.state, -1, type);
+    if (!lua_istable(scripting_api.state, -1)) {
+        lua_pop(scripting_api.state, 1);
+
+        char *path = format("resources/objects/%s.lua", type);
+        if (!fs_exists(path))
+            path = format("resources/engine/objects/%s.lua", type);
+        if (!fs_exists(path))
+            return result_error("ObjectNotFoundError", "The object '%s' could not be loaded because it could not be found.", type);
+
+        if (luaL_dofile(scripting_api.state, path) != 0) {
+            result_t res = result_error("ObjectCodeError", lua_tostring(scripting_api.state, -1));
+            lua_pop(scripting_api.state, 2);
+            free(path);
+            return res;
+        }
+        if (!lua_istable(scripting_api.state, -1)) {
+            result_t res = result_error("InvalidObjectError", "Object '%s' did not return a table in its code file.", type);
+            lua_pop(scripting_api.state, 2);
+            free(path);
+            return res;
+        }
+
+        lua_pushvalue(scripting_api.state, -1);
+        lua_setfield(scripting_api.state, -3, type);
+    }
+    lua_remove(scripting_api.state, -3);
+    lua_remove(scripting_api.state, -2);
+    return result_no_error();
+}
+
+void scripting_api_dump_stack(void) {
+    system("cls");
+    int top = lua_gettop(scripting_api.state);
+    printf("INDEX  TYPE     VALUE\n");
+    for (int i = 1; i <= top; i++) {
+        printf("-%-5d %-8s ", top - i + 1, luaL_typename(scripting_api.state, i));
+        switch (lua_type(scripting_api.state, i)) {
+        case LUA_TNUMBER:
+            printf("%-30g\n", lua_tonumber(scripting_api.state, i));
+            break;
+        case LUA_TSTRING:
+            printf("'%-30s'\n",lua_tostring(scripting_api.state, i));
+            break;
+        case LUA_TBOOLEAN:
+            printf("%-32s\n", (lua_toboolean(scripting_api.state, i) ? "true" : "false"));
+            break;
+        case LUA_TNIL:
+            printf("%-32s\n", "nil");
+            break;
+        default:
+            printf("%-32p\n", lua_topointer(scripting_api.state,i));
+            break;
+        }
+    }
 }

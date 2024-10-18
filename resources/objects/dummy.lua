@@ -1,11 +1,9 @@
 require("syrup")
 
 return {
-    update = function(self)
-        self:log()
-    end,
+    extends = "loggable",
 
-    log = function(_)
-        io.write("yeah\n")
+    update = function(self)
+        self:log("Test")
     end,
 }

@@ -6,10 +6,5 @@
     "Lua.workspace.library": [
         "engine/api/*",
         "resources/engine/api/*"
-    ],
-    "Lua.workspace.ignoreDir": [
-        "resources/engine/api",
-        "resources/engine/objects",
-        "resources/objects",
     ]
 }
