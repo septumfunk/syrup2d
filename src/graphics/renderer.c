@@ -58,6 +58,15 @@ void renderer_init_window(void) {
         resource_manager.game_data.height * 8
     );
 
+    // Icon
+    sprite_t *ico_spr = resource_manager_sprite("icon");
+    GLFWimage icon = {
+        .width = ico_spr->data.width,
+        .height = ico_spr->data.height,
+        .pixels = ico_spr->image_data,
+    };
+    glfwSetWindowIcon(renderer.window_handle, 1, &icon);
+
     // Ready
     glViewport(0, 0, resource_manager.game_data.width, resource_manager.game_data.height);
     glfwSwapInterval(0);
@@ -131,6 +140,10 @@ void renderer_swap(void) {
     renderer_draw_framebuffer();
     glfwSwapBuffers(renderer.window_handle);
     glfwPollEvents();
+
+    // Minimized
+    while (glfwGetWindowAttrib(renderer.window_handle, GLFW_ICONIFIED))
+        glfwPollEvents();
 
     renderer.delta_time = glfwGetTime() - renderer._last_time;
     renderer.fps = 1.0f / renderer.delta_time;
@@ -235,8 +248,8 @@ void renderer_fbo_mouse_position(double *x, double *y) {
     double mx, my;
     glfwGetCursorPos(renderer.window_handle, &mx, &my);
 
-    double dx = renderer.window_dimensions.width / resource_manager.game_data.width;
-    double dy = renderer.window_dimensions.height / resource_manager.game_data.height;
+    double dx = (double)renderer.window_dimensions.width / resource_manager.game_data.width;
+    double dy = (double)renderer.window_dimensions.height / resource_manager.game_data.height;
     double aspect = dx / dy;
     *x = mx / dx;
     *y = my / dy;
@@ -263,7 +276,7 @@ void renderer_draw_rectangle(float x, float y, float width, float height, color_
     glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
-void resource_manager_draw_text(const char *name, float x, float y, const char *text, color_t color) {
+void renderer_draw_text(const char *name, float x, float y, const char *text, color_t color) {
     sprite_t *spr = resource_manager_sprite(name);
     int charwidth = spr->data.width / spr->data.frame_count;
     float x_offset = 0;
@@ -290,7 +303,7 @@ void _renderer_framebuffer_resize_cb(unused GLFWwindow *handle, int width, int h
     // Framebuffer
     renderer_bind("framebuffer");
     float x_mult = 1, y_mult = 1;
-    float aspect = ((float)width / (float)renderer.window_dimensions.width) / ((float)height / (float)renderer.window_dimensions.height);
+    float aspect = ((float)width / (float)resource_manager.game_data.width) / ((float)height / (float)resource_manager.game_data.height);
     if (aspect > 1)
         x_mult = aspect;
     else if (aspect < 1)

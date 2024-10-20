@@ -8,7 +8,7 @@
             "name": "(Windows) Launch",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/syrup-engine.exe",
+            "program": "${workspaceFolder}/build/syrup2d.exe",
             "preLaunchTask": "CMake Build",
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",
@@ -20,7 +20,7 @@
         "env": {
             "LIBGL_ALWAYS_INDIRECT": "1",
         },
-        "program": "${workspaceFolder}/build/syrup-engine",
+        "program": "${workspaceFolder}/build/syrup2d",
         "preLaunchTask": "CMake Build",
         "cwd": "${workspaceFolder}",
         "console": "externalTerminal",

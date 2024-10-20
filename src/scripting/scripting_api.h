@@ -4,6 +4,9 @@
 #include <lua.h>
 #include <stdint.h>
 
+#define OBJECT_PATH "resources/objects/%s.lua"
+#define OBJECT_ENGINE_PATH "resources/engine/objects/%s.lua"
+
 typedef struct scripting_api_t {
     uint32_t current_id;
     lua_State *state;
@@ -23,7 +26,13 @@ void scripting_api_draw(void);
 
 result_t scripting_api_push(const char *type, float x, float y);
 result_t scripting_api_create(const char *type, float x, float y);
+void scripting_api_delete(uint32_t id);
 
 void scripting_api_copy_table(void);
-result_t scripting_api_cache_load(const char *type);
 void scripting_api_dump_stack(void);
+
+int api_internal_base_start(lua_State *L);
+int api_internal_base_update(lua_State *L);
+int api_internal_base_draw(lua_State *L);
+int api_internal_base_draw_ui(lua_State *L);
+int api_internal_base_clean_up(lua_State *L);

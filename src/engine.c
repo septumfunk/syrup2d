@@ -19,7 +19,7 @@ void engine_start() {
     keyboard_mouse_init();
     scripting_api_init();
 
-    result_t res = scripting_api_create("rubber", 0, 0);
+    result_t res = scripting_api_create("editor/ui_controller", 0, 0);
     panic(res);
 
     while (renderer_loop()) {

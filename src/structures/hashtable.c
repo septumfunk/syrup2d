@@ -89,7 +89,7 @@ void *hashtable_insert(hashtable_t *this, void *key, void *value, uint32_t size)
 void *hashtable_get(hashtable_t *this, void *key) {
     uint32_t hash = hashtable_hash(this, key) & (this->bucket_count - 1);
     for (pair_t *pair = this->buckets[hash].pair; pair != NULL; pair = pair->next)
-        if (bstrcmp(key, pair->key))
+        if (this->key_size == -1 ? bstrcmp(key, pair->key) : memcmp(key, pair->key, this->key_size) == 0)
             return pair->value;
     return NULL;
 }
@@ -109,7 +109,7 @@ pair_t **hashtable_pairs(hashtable_t *this, uint32_t *count) {
 void hashtable_remove(hashtable_t *this, void *key) {
     uint32_t hash = hashtable_hash(this, key) & (this->bucket_count - 1);
     for (pair_t *pair = this->buckets[hash].pair; pair != NULL; pair = pair->next) {
-        if (bstrcmp(key, pair->key)) {
+        if (this->key_size == -1 ? bstrcmp(key, pair->key) : memcmp(key, pair->key, this->key_size)) {
             if (pair == this->buckets[hash].pair)
                 this->buckets[hash].pair = pair->next;
             pair_delete(pair);

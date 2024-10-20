@@ -3,6 +3,8 @@
 #include "../util/stringext.h"
 #include "../util/log.h"
 #include "sprite.h"
+#include "cursor.h"
+#include <GLFW/glfw3.h>
 #include <lauxlib.h>
 #include <lua.h>
 #include <stdlib.h>
@@ -14,11 +16,13 @@ void resource_manager_init(bool garbage_collecter) {
     memset(&resource_manager, 0, sizeof(resource_manager_t));
     resource_manager.gc = garbage_collecter;
     resource_manager.sprite_table = hashtable_string();
+    resource_manager.cursor_table = hashtable_arbitrary(sizeof(mouse_cursors_e));
     resource_manager_load_game_data("resources");
 }
 
 void resource_manager_cleanup(void) {
     hashtable_delete(&resource_manager.sprite_table);
+    hashtable_delete(&resource_manager.cursor_table);
 }
 
 void resource_manager_load_game_data(const char *folder) {
@@ -137,6 +141,15 @@ result_t resource_manager_import_sprite(const char *name, uint8_t frame_count, u
     sprite_save(&spr);
 
     return result_no_error();
+}
+
+GLFWcursor *resource_manager_cursor(mouse_cursors_e cursor) {
+    GLFWcursor **c = hashtable_get(&resource_manager.cursor_table, &cursor);
+    if (!c) {
+        GLFWcursor *c_ptr = glfwCreateStandardCursor(cursor);
+        c = hashtable_insert(&resource_manager.cursor_table, &cursor, &c_ptr, sizeof(GLFWcursor *));
+    }
+    return *c;
 }
 
 void resource_manager_clean(void) {

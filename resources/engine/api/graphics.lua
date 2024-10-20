@@ -25,3 +25,11 @@ syrup.graphics.draw_sprite = function(name, x, y, frame)end
 ---@param frame integer
 ---@param color table
 syrup.graphics.draw_sprite_tint = function(name, x, y, frame, color)end
+
+---[API] Draw text made using a sprite.
+---@param name string
+---@param x number
+---@param y number
+---@param text string
+---@param color table
+syrup.graphics.draw_text = function(name, x, y, text, color)end

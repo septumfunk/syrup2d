@@ -31,3 +31,8 @@ syrup.input.is_mouse_button_down = function(button)end
 ---@return string keyboard_string
 ---@diagnostic disable-next-line: missing-return
 syrup.input.keyboard_string = function()end
+
+---[API] Set the mouse cursor to the desired cursor icon.
+--- You should use the `syrup.input.cursor` table for this.
+---@param cursor integer
+syrup.input.set_cursor = function(cursor)end

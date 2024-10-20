@@ -3,14 +3,14 @@ cmake_minimum_required(VERSION 3.28)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 project(
-    syrup-engine
+    syrup2d
     VERSION 0.1
     LANGUAGES C
 )
 
 # Sources
 add_executable(${PROJECT_NAME}
-    syrup-engine.rc
+    syrup2d.rc
 
     src/main.c
     src/engine.c
@@ -30,6 +30,7 @@ add_executable(${PROJECT_NAME}
 
     src/scripting/modules/modules.c
     src/scripting/modules/graphics.c
+    src/scripting/modules/objects.c
     src/scripting/modules/input.c
 
     src/structures/hashtable.c

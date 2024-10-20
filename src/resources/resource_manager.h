@@ -1,4 +1,5 @@
 #pragma once
+#include "cursor.h"
 #include "sprite.h"
 #include "../graphics/shader.h"
 #include "../structures/hashtable.h"
@@ -18,6 +19,7 @@ typedef struct resource_manager_t {
     bool gc;
     syrup_config_t game_data;
     hashtable_t sprite_table;
+    hashtable_t cursor_table;
 } resource_manager_t;
 extern resource_manager_t resource_manager;
 
@@ -29,5 +31,7 @@ void resource_manager_save_game_data(const char *folder);
 
 sprite_t *resource_manager_sprite(const char *name);
 result_t resource_manager_import_sprite(const char *name, uint8_t frame_count, uint8_t frame_delay);
+
+GLFWcursor *resource_manager_cursor(mouse_cursors_e cursor);
 
 void resource_manager_clean(void);

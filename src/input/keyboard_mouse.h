@@ -1,6 +1,7 @@
 #pragma once
 #include "../util/ext.h"
 #include "../graphics/opengl.h"
+#include "../structures/hashtable.h"
 #include <GLFW/glfw3.h>
 #include <lua.h>
 
@@ -113,6 +114,7 @@ typedef struct keyboard_mouse_t {
     bool keys_pressed[KEY_COUNT];
     bool mouse_buttons_pressed[MOUSE_BUTTON_COUNT];
     char keyboard_string[KEYBOARD_STRING_COUNT];
+    GLFWcursor *cursor;
 } keyboard_mouse_t;
 /// keyboard_mouse system's main instance
 extern keyboard_mouse_t keyboard_mouse;

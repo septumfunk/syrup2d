@@ -1,4 +1,4 @@
-key = {
+syrup.input.key = {
     space = 32,
     apostrophe = 39,
     comma = 44,
@@ -90,7 +90,20 @@ key = {
     menu = 348
 }
 
-mouse_button = {
+syrup.input.mouse_button = {
     left = 0,
     right = 1,
+    middle = 2,
+}
+
+syrup.input.cursor = {
+    normal = 221185,
+    pointer = 221188,
+    beam = 221186,
+    crosshair = 221187,
+    hand = 221188,
+    hresize = 221189,
+    vresize = 221190,
+    nwseresize = 221191,
+    neswresize = 221192,
 }

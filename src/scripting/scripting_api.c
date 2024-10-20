@@ -48,7 +48,7 @@ void scripting_api_init_globals(void) {
     lua_setfield(scripting_api.state, -2, "dimensions");
 
     lua_newtable(scripting_api.state);
-    lua_setfield(scripting_api.state, -2, "objects");
+    lua_setfield(scripting_api.state, -2, "cache");
     lua_newtable(scripting_api.state);
     lua_setfield(scripting_api.state, -2, "instances");
 
@@ -102,8 +102,10 @@ void scripting_api_update(void) {
         if (lua_isfunction(scripting_api.state, -1)) {
             lua_pushvalue(scripting_api.state, -2);
             if (lua_pcall(scripting_api.state, 1, 0, 0) != LUA_OK) {
+                const char *err = lua_tostring(scripting_api.state, -1);
+                luaL_traceback(scripting_api.state, scripting_api.state, err, 2);
                 log_error(lua_tostring(scripting_api.state, -1));
-                lua_pop(scripting_api.state, 1);
+                lua_pop(scripting_api.state, 2);
             }
         } else lua_pop(scripting_api.state, 1);
 
@@ -179,7 +181,7 @@ void scripting_api_draw(void) {
             continue;
         }
 
-        lua_getfield(scripting_api.state, -1, "draw_gui");
+        lua_getfield(scripting_api.state, -1, "draw_ui");
         if (lua_isfunction(scripting_api.state, -1)) {
             lua_pushvalue(scripting_api.state, -2);
             if (lua_pcall(scripting_api.state, 1, 0, 0) != LUA_OK) {
@@ -204,18 +206,26 @@ result_t scripting_api_push(const char *type, float x, float y) {
     hashtable_insert(&inherited, (void *)type, &t, sizeof(bool));
     uint32_t to_pop = 0;
     while (true) {
-        result_t res = scripting_api_cache_load(to_load);
-        if (res.is_error) {
-            free(to_load);
+        char *path = format(OBJECT_PATH, to_load);
+        if (!fs_exists(path)) {
+            free(path);
+            path = format(OBJECT_ENGINE_PATH, to_load);
+        }
+        if (luaL_dofile(scripting_api.state, path) != LUA_OK) {
+            result_t res = result_error("LuaFileError", lua_tostring(scripting_api.state, -1));
+            lua_pop(scripting_api.state, 1);
             return res;
         }
-        scripting_api_copy_table();
+        free(path);
 
-        lua_remove(scripting_api.state, -2); // Cache
+        if (!lua_istable(scripting_api.state, -1))
+            return result_error("LuaTableError", "Object '%s' failed to return a table.", to_load);
 
         if (to_pop) {
             lua_newtable(scripting_api.state);
             lua_pushvalue(scripting_api.state, -2);
+            lua_pushstring(scripting_api.state, to_load);
+            lua_setfield(scripting_api.state, -2, "type");
             lua_setfield(scripting_api.state, -2, "__index");
             lua_setmetatable(scripting_api.state, -3);
         }
@@ -241,8 +251,6 @@ result_t scripting_api_push(const char *type, float x, float y) {
         break;
     }
 
-    if (scripting_api.manager.list_count >= 4294967295)
-        panic(result_error("ObjectOverflowError", "Object count exceeded maximum unsigned integer limit. How did you even manage to do that, dude?"))\
     while (object_manager_get(&scripting_api.manager, scripting_api.current_id))
         scripting_api.current_id++;
 
@@ -255,7 +263,8 @@ result_t scripting_api_push(const char *type, float x, float y) {
     }
 
     // Create Object
-    object_t *object = object_manager_push(&scripting_api.manager, type, scripting_api.current_id++, lua_tonumber(scripting_api.state, -1));
+    object_manager_push(&scripting_api.manager, type, scripting_api.current_id, lua_tonumber(scripting_api.state, -1));
+    object_t *object = object_manager_get(&scripting_api.manager, scripting_api.current_id++);
     lua_pop(scripting_api.state, 1);
 
     lua_pushnumber(scripting_api.state, object->id);
@@ -274,6 +283,18 @@ result_t scripting_api_push(const char *type, float x, float y) {
     lua_pushvalue(scripting_api.state, -4);
     lua_settable(scripting_api.state, -3);
     lua_pop(scripting_api.state, 2);
+
+    // Functions
+    lua_pushcfunction(scripting_api.state, api_internal_base_start);
+    lua_setfield(scripting_api.state, -2, "base_start");
+    lua_pushcfunction(scripting_api.state, api_internal_base_update);
+    lua_setfield(scripting_api.state, -2, "base_update");
+    lua_pushcfunction(scripting_api.state, api_internal_base_draw);
+    lua_setfield(scripting_api.state, -2, "base_draw");
+    lua_pushcfunction(scripting_api.state, api_internal_base_draw_ui);
+    lua_setfield(scripting_api.state, -2, "base_draw_ui");
+    lua_pushcfunction(scripting_api.state, api_internal_base_clean_up);
+    lua_setfield(scripting_api.state, -2, "base_clean_up");
 
     // Call start
     lua_getfield(scripting_api.state, -1, "start");
@@ -297,6 +318,36 @@ result_t scripting_api_create(const char *type, float x, float y) {
     return result_no_error();
 }
 
+void scripting_api_delete(uint32_t id) {
+    lua_getglobal(scripting_api.state, "syrup");
+    lua_getfield(scripting_api.state, -1, "instances");
+    lua_pushinteger(scripting_api.state, id);
+    lua_gettable(scripting_api.state, -2);
+
+    if (!lua_istable(scripting_api.state, -1)) {
+        lua_pop(scripting_api.state, 3);
+        return;
+    }
+
+    // Clean up
+    lua_getfield(scripting_api.state, -1, "clean_up");
+    if (lua_isfunction(scripting_api.state, -1)) {
+        lua_pushvalue(scripting_api.state, -2);
+        if (lua_pcall(scripting_api.state, 1, 0, 0) != LUA_OK) {
+            log_error(lua_tostring(scripting_api.state, -1));
+            lua_pop(scripting_api.state, 1);
+        }
+    } else lua_pop(scripting_api.state, 1);
+    lua_pop(scripting_api.state, 1);
+
+    lua_pushinteger(scripting_api.state, id);
+    lua_pushnil(scripting_api.state);
+    lua_settable(scripting_api.state, -3);
+    lua_pop(scripting_api.state, 2);
+
+    object_manager_remove(&scripting_api.manager, id);
+}
+
 void scripting_api_copy_table(void) {
     lua_newtable(scripting_api.state); // Object
     lua_pushnil(scripting_api.state);
@@ -305,40 +356,6 @@ void scripting_api_copy_table(void) {
         lua_insert(scripting_api.state, -2);
         lua_settable(scripting_api.state, -4);
     }
-}
-
-result_t scripting_api_cache_load(const char *type) {
-    lua_getglobal(scripting_api.state, "syrup");
-    lua_getfield(scripting_api.state, -1, "objects");
-    lua_getfield(scripting_api.state, -1, type);
-    if (!lua_istable(scripting_api.state, -1)) {
-        lua_pop(scripting_api.state, 1);
-
-        char *path = format("resources/objects/%s.lua", type);
-        if (!fs_exists(path))
-            path = format("resources/engine/objects/%s.lua", type);
-        if (!fs_exists(path))
-            return result_error("ObjectNotFoundError", "The object '%s' could not be loaded because it could not be found.", type);
-
-        if (luaL_dofile(scripting_api.state, path) != 0) {
-            result_t res = result_error("ObjectCodeError", lua_tostring(scripting_api.state, -1));
-            lua_pop(scripting_api.state, 2);
-            free(path);
-            return res;
-        }
-        if (!lua_istable(scripting_api.state, -1)) {
-            result_t res = result_error("InvalidObjectError", "Object '%s' did not return a table in its code file.", type);
-            lua_pop(scripting_api.state, 2);
-            free(path);
-            return res;
-        }
-
-        lua_pushvalue(scripting_api.state, -1);
-        lua_setfield(scripting_api.state, -3, type);
-    }
-    lua_remove(scripting_api.state, -3);
-    lua_remove(scripting_api.state, -2);
-    return result_no_error();
 }
 
 void scripting_api_dump_stack(void) {
@@ -365,4 +382,94 @@ void scripting_api_dump_stack(void) {
             break;
         }
     }
+}
+
+int api_internal_base_start(lua_State *L) {
+    luaL_checktype(L, 1, LUA_TTABLE);
+    if (!luaL_getmetafield(L, -1, "__index") || !lua_istable(L, -1)) {
+        lua_pop(L, 1);
+        return 0;
+    }
+    if (!lua_getfield(L, -1, "start") || !lua_isfunction(L, -1)) {
+        lua_pop(L, 2);
+        return 0;
+    }
+    lua_pushvalue(L, -3);
+    if (lua_pcall(L, 1, 0, 0) != LUA_OK) {
+        log_error(lua_tostring(L, -1));
+    }
+    lua_pop(L, 2);
+    return 0;
+}
+
+int api_internal_base_update(lua_State *L) {
+    luaL_checktype(L, 1, LUA_TTABLE);
+    if (!luaL_getmetafield(L, -1, "__index") || !lua_istable(L, -1)) {
+        lua_pop(L, 1);
+        return 0;
+    }
+    if (!lua_getfield(L, -1, "update") || !lua_isfunction(L, -1)) {
+        lua_pop(L, 2);
+        return 0;
+    }
+    lua_pushvalue(L, -3);
+    if (lua_pcall(L, 1, 0, 0) != LUA_OK) {
+        log_error(lua_tostring(L, -1));
+    }
+    lua_pop(L, 2);
+    return 0;
+}
+
+int api_internal_base_draw(lua_State *L) {
+    luaL_checktype(L, 1, LUA_TTABLE);
+    if (!luaL_getmetafield(L, -1, "__index") || !lua_istable(L, -1)) {
+        lua_pop(L, 1);
+        return 0;
+    }
+    if (!lua_getfield(L, -1, "draw") || !lua_isfunction(L, -1)) {
+        lua_pop(L, 2);
+        return 0;
+    }
+    lua_pushvalue(L, -3);
+    if (lua_pcall(L, 1, 0, 0) != LUA_OK) {
+        log_error(lua_tostring(L, -1));
+    }
+    lua_pop(L, 2);
+    return 0;
+}
+
+int api_internal_base_draw_ui(lua_State *L) {
+    luaL_checktype(L, 1, LUA_TTABLE);
+    if (!luaL_getmetafield(L, -1, "__index") || !lua_istable(L, -1)) {
+        lua_pop(L, 1);
+        return 0;
+    }
+    if (!lua_getfield(L, -1, "draw_ui") || !lua_isfunction(L, -1)) {
+        lua_pop(L, 2);
+        return 0;
+    }
+    lua_pushvalue(L, -3);
+    if (lua_pcall(L, 1, 0, 0) != LUA_OK) {
+        log_error(lua_tostring(L, -1));
+    }
+    lua_pop(L, 2);
+    return 0;
+}
+
+int api_internal_base_clean_up(lua_State *L) {
+    luaL_checktype(L, 1, LUA_TTABLE);
+    if (!luaL_getmetafield(L, -1, "__index") || !lua_istable(L, -1)) {
+        lua_pop(L, 1);
+        return 0;
+    }
+    if (!lua_getfield(L, -1, "clean_up") || !lua_isfunction(L, -1)) {
+        lua_pop(L, 2);
+        return 0;
+    }
+    lua_pushvalue(L, -3);
+    if (lua_pcall(L, 1, 0, 0) != LUA_OK) {
+        log_error(lua_tostring(L, -1));
+    }
+    lua_pop(L, 2);
+    return 0;
 }

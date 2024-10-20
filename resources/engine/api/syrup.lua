@@ -1,6 +1,6 @@
 ---[API] The syrup engine's lua scripting api module table.
 syrup = {
-    objects = {},
+    cache = {},
     instances = {},
     dimensions = { width = 0, height = 0 },
     mouse = { x = 0, y = 0 },
