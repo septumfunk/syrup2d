@@ -70,5 +70,7 @@ return {
             self.cmd_button.height + self.taskbar_padding * 2,
             ui_color_primary
         )
+
+        syrup.graphics.draw_sprite_pro("vap", 0, 0, 2, 1, 25, 0, { r = 255, g = 255, b = 255, a = 255 })
     end,
 }

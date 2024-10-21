@@ -2,6 +2,10 @@
 #include "../resources/fs.h"
 #include "../util/stringext.h"
 #include "../util/crypto.h"
+#include "../graphics/renderer.h"
+#include <cglm/affine-pre.h>
+#include <cglm/mat4.h>
+#include <cglm/util.h>
 #include <glad/glad.h>
 #include <stb_image.h>
 #include <stdint.h>
@@ -118,10 +122,11 @@ void sprite_delete(sprite_t *this) {
 }
 
 void sprite_draw(sprite_t *this, float x, float y, uint8_t frame_index) {
-    sprite_draw_tint(this, x, y, frame_index, (color_t) { 255, 255, 255, 255 });
+    sprite_draw_pro(this, x, y, 1, 1, 0, frame_index, (color_t) { 255, 255, 255, 255 });
 }
 
-void sprite_draw_tint(sprite_t *this, float x, float y, uint8_t frame_index, color_t tint) {
+void sprite_draw_pro(sprite_t *this, float x, float y, float x_scale, float y_scale, float rotation, uint8_t frame_index, color_t tint) {
+    renderer_bind("sprite");
     gl_color_t t = color_to_gl(tint);
     glBindTexture(GL_TEXTURE_2D, this->texture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -131,6 +136,12 @@ void sprite_draw_tint(sprite_t *this, float x, float y, uint8_t frame_index, col
 
     float frame_width = 1.0f / this->data.frame_count;
     float offset = frame_index * frame_width;
+
+    mat4 model_matrix;
+    glm_mat4_identity(model_matrix);
+    glm_scale(model_matrix, (vec3) { x_scale, y_scale, 1 });
+    glm_rotate_at(model_matrix, (vec3) { this->data.width / 2, this->data.height / 2 }, glm_rad(rotation), (vec3) { 0, 0, 1 });
+    renderer_uniform_mat4("sprite", "model_matrix", model_matrix);
 
     float true_width = this->data.frame_count == 0 ? this->data.width : this->data.width / this->data.frame_count;
     float verts[] = {

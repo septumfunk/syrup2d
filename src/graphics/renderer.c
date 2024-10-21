@@ -289,7 +289,7 @@ void renderer_draw_text(const char *name, float x, float y, const char *text, co
         }
         if (idx > 126 || idx < 32)
             idx = '?';
-        sprite_draw_tint(resource_manager_sprite(name), x + x_offset, y, idx - 32, color);
+        sprite_draw_pro(resource_manager_sprite(name), x + x_offset, y, 0, 0, 0, idx - 32, color);
         x_offset += charwidth;
     }
 }

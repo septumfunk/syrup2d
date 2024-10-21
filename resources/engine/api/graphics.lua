@@ -18,13 +18,16 @@ syrup.graphics.draw_rectangle = function(x, y, width, height, color)end
 ---@param frame integer
 syrup.graphics.draw_sprite = function(name, x, y, frame)end
 
----[API] Draw a sprite using Syrup's renderer with a color tint applied.
+---[API] Draw a sprite using Syrup's renderer with extra options.
 ---@param name string
 ---@param x number
 ---@param y number
+---@param x_scale number
+---@param y_scale number
+---@param rotation number
 ---@param frame integer
----@param color table
-syrup.graphics.draw_sprite_tint = function(name, x, y, frame, color)end
+---@param tint table
+syrup.graphics.draw_sprite_pro = function(name, x, y, x_scale, y_scale, rotation, frame, tint)end
 
 ---[API] Draw text made using a sprite.
 ---@param name string

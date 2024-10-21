@@ -39,5 +39,5 @@ void sprite_delete(sprite_t *this);
 
 /// Draw a sprite to the screen
 void sprite_draw(sprite_t *this, float x, float y, uint8_t frame_index);
-/// Draw a sprite to the screen with a tint color
-void sprite_draw_tint(sprite_t *this, float x, float y, uint8_t frame_index, color_t tint);
+/// Draw a sprite to the screen with extra options
+void sprite_draw_pro(sprite_t *this, float x, float y, float x_scale, float y_scale, float rotation, uint8_t frame_index, color_t tint);
