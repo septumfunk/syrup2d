@@ -115,6 +115,22 @@ void renderer_init_framebuffer(void) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderer.color_attachment, 0);
 
+    renderer_bind("framebuffer");
+    float verts[] = {
+        -1.0f, 1.0f, 0.0f, 1.0f, // Top Left
+        1.0f, 1.0f, 1.0f, 1.0f, // Top Right
+        -1.0f, -1.0f, 0.0f, 0.0f, // Bottom Left
+
+        1.0f, -1.0f, 1.0f, 0.0f, // Bottom Right
+        1.0f, 1.0f, 1.0f, 1.0f, // Top Right
+        -1.0f, -1.0f, 0.0f, 0.0f,  // Bottom Left
+    };
+    glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+
     renderer_set_clear_color((color_t) { 0, 0, 0, 255 });
 }
 
@@ -295,37 +311,28 @@ void renderer_draw_text(const char *name, float x, float y, const char *text, co
 }
 
 void _renderer_framebuffer_resize_cb(unused GLFWwindow *handle, int width, int height) {
-    // Update window
     renderer.window_dimensions.width = width;
     renderer.window_dimensions.height = height;
 
-    // Framebuffer
-    renderer_bind("framebuffer");
-    float x_mult = 1, y_mult = 1;
-    float aspect = ((float)width / (float)resource_manager.game_data.width) / ((float)height / (float)resource_manager.game_data.height);
-    if (aspect > 1)
-        x_mult = aspect;
-    else if (aspect < 1)
-        y_mult = aspect;
-    float verts[] = {
-        -1.0f / x_mult, 1.0f * y_mult, 0.0f, 1.0f, // Top Left
-        1.0f / x_mult, 1.0f * y_mult, 1.0f, 1.0f, // Top Right
-        -1.0f / x_mult, -1.0f * y_mult, 0.0f, 0.0f, // Bottom Left
+    float framebuffer_aspect = (float)resource_manager.game_data.width / resource_manager.game_data.height;
+    float window_aspect = (float)width / height;
 
-        1.0f / x_mult, -1.0f * y_mult, 1.0f, 0.0f, // Bottom Right
-        1.0f / x_mult, 1.0f * y_mult, 1.0f, 1.0f, // Top Right
-        -1.0f / x_mult, -1.0f * y_mult, 0.0f, 0.0f,  // Bottom Left
-    };
-    glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+    int viewport_width, viewport_height;
+    int x_offset = 0, y_offset = 0;
 
+    if (window_aspect > framebuffer_aspect) {
+        viewport_height = height;
+        viewport_width = (int)(framebuffer_aspect * height);
+        x_offset = (width - viewport_width) / 2;  // Center horizontally
+    } else {
+        viewport_width = width;
+        viewport_height = (int)(width / framebuffer_aspect);
+        y_offset = (height - viewport_height) / 2;  // Center vertically
+    }
+
+    glViewport(x_offset, y_offset, viewport_width, viewport_height);
     glBindTexture(GL_TEXTURE_2D, renderer.color_attachment);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-
-    glViewport(0, 0, width, height);
 }
 
 void _renderer_error_cb(int error_code, const char* description) {

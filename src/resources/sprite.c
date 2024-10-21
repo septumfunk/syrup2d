@@ -137,8 +137,8 @@ void sprite_draw_pro(sprite_t *this, float x, float y, float x_scale, float y_sc
     float frame_width = 1.0f / this->data.frame_count;
     float offset = frame_index * frame_width;
 
-    float half_width = this->data.width / this->data.frame_count / 2;
-    float half_height = this->data.height / 2;
+    float half_width = floor(this->data.width / this->data.frame_count / 2);
+    float half_height = floor(this->data.height / 2);
 
     mat4 model_matrix;
     glm_mat4_identity(model_matrix);
