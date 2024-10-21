@@ -9,6 +9,7 @@ scripting_function_t api_graphics_functions[] = {
     { "draw_rectangle", api_graphics_draw_rectangle },
     { "draw_sprite", api_graphics_draw_sprite },
     { "draw_sprite_pro",  api_graphics_draw_sprite_pro },
+    { "sprite_dimensions",  api_graphics_sprite_dimensions },
     { "draw_text", api_graphics_draw_text },
 };
 
@@ -85,6 +86,16 @@ int api_graphics_draw_sprite_pro(lua_State *L) {
         }
     );
     return 0;
+}
+
+int api_graphics_sprite_dimensions(lua_State *L) {
+    sprite_t *spr = resource_manager_sprite(luaL_checkstring(L, 1));
+    lua_newtable(L);
+    lua_pushnumber(L, spr->data.width);
+    lua_setfield(L, -2, "width");
+    lua_pushnumber(L, spr->data.height);
+    lua_setfield(L, -2, "height");
+    return 1;
 }
 
 int api_graphics_draw_text(lua_State *L) {

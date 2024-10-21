@@ -66,7 +66,7 @@ return {
         syrup.mouse.y < bottom + hovering_window_leeway
         local cursor_set = false
 
-        if hovering_window and self.resizable then
+        if (hovering_window or self.extend.dir) and self.resizable then
             local new_x = syrup.mouse.x - self.extend.offset.x
             local new_y = syrup.mouse.y - self.extend.offset.y
 

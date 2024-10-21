@@ -18,8 +18,8 @@ return {
             self.held = true
         end
         if self.held and not syrup.input.is_mouse_button_down(syrup.input.mouse_button.left) then
-            self:on_click()
             self.held = false
+            self:on_click()
         end
     end,
 

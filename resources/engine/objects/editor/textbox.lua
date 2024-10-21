@@ -11,12 +11,12 @@ return {
 
     start = function(self)
         self:base_start()
-        self.width = ui_text_size.width * self.limit + self.padding * 2 + self.border * 2
+        self.width = ui_text_size.width * math.max(self.limit, string.len(self.default)) + self.padding * 2 + self.border * 2
         self.height = ui_text_size.height + self.padding * 2 + self.border * 2
     end,
 
     update = function(self)
-        self.width = ui_text_size.width * self.limit + self.padding * 2 + self.border * 2
+        self.width = ui_text_size.width * math.max(self.limit, string.len(self.default)) + self.padding * 2 + self.border * 2
         self.height = ui_text_size.height + self.padding * 2 + self.border * 2
         self:base_update()
         if syrup.input.is_mouse_button_pressed(syrup.input.mouse_button.left) then

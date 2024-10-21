@@ -142,7 +142,7 @@ void sprite_draw_pro(sprite_t *this, float x, float y, float x_scale, float y_sc
 
     mat4 model_matrix;
     glm_mat4_identity(model_matrix);
-    glm_translate(model_matrix, (vec3) { x + half_width, y + half_height, 0 });
+    glm_translate(model_matrix, (vec3) { x + half_width * x_scale, y + half_height * y_scale, 0 });
     glm_rotate(model_matrix, glm_rad(rotation), (vec3) { 0, 0, 1 });
     glm_scale(model_matrix, (vec3) { x_scale, y_scale, 1 });
     renderer_uniform_mat4("sprite", "model_matrix", model_matrix);

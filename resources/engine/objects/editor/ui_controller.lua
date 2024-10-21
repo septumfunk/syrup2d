@@ -34,11 +34,16 @@ return {
                 self.cmd_button.command = nil
             end
             if self.cmd_button.command == nil then return end
-            self.cmd_button.command:add_entry("Spawn Basic Window", function(_)
-                local window = syrup.objects.new("editor/window", 0, 0)
+            self.cmd_button.command:add_entry("View Sprite", function(_)
+                local window = syrup.objects.new("editor/viewer", 0, 0)
                 if window == nil then return end
-
-                window:set_title("Basic Window")
+                window.x = syrup.dimensions.width / 2 - window.width / 2
+                window.y = syrup.dimensions.height / 2 - window.height / 2
+                syrup.objects.delete(self.cmd_button.command.id)
+            end)
+            self.cmd_button.command:add_entry("Import Sprite", function(_)
+                local window = syrup.objects.new("editor/importer", 0, 0)
+                if window == nil then return end
                 window.x = syrup.dimensions.width / 2 - window.width / 2
                 window.y = syrup.dimensions.height / 2 - window.height / 2
                 syrup.objects.delete(self.cmd_button.command.id)
@@ -103,7 +108,5 @@ return {
             self.cmd_button.height + self.taskbar_padding * 2,
             ui_color_primary
         )
-
-        syrup.graphics.draw_sprite_pro("vap", 250, 250, self.x_scale, self.y_scale, self.rotation, 0, { r = 255, g = 255, b = 255, a = 255 })
     end,
 }

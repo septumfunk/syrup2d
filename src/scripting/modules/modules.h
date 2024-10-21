@@ -19,6 +19,7 @@ typedef enum scripting_modules_e {
     SCRIPTING_MODULE_GRAPHICS,
     SCRIPTING_MODULE_OBJECTS,
     SCRIPTING_MODULE_INPUT,
+    SCRIPTING_MODULE_RESOURCES,
     SCRIPTING_MODULES_COUNT,
 } scripting_modules_e;
 
