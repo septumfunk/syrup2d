@@ -1,4 +1,3 @@
-//? septumfunk
 #include "hashtable.h"
 #include "../util/stringext.h"
 #include "../util/crypto.h"

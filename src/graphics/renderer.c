@@ -1,4 +1,3 @@
-//? septumfunk
 #include "renderer.h"
 #include "../resources/resource_manager.h"
 #include "../util/log.h"
@@ -69,7 +68,7 @@ void renderer_init_window(void) {
 
     // Ready
     glViewport(0, 0, resource_manager.game_data.width, resource_manager.game_data.height);
-    glfwSwapInterval(0);
+    glfwSwapInterval(1);
     glfwShowWindow(renderer.window_handle);
 }
 

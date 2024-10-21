@@ -108,5 +108,7 @@ int api_objects_get_all(lua_State *L) {
     }
     lua_pop(L, 2);
 
+    object_list_t list = { .type = NULL, .start = objects };
+    object_list_delete(&list);
     return 1;
 }

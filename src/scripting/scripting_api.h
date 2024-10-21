@@ -1,7 +1,7 @@
 #pragma once
 #include "object_manager.h"
 #include "../structures/result.h"
-#include <lua.h>
+#include <lua_all.h>
 #include <stdint.h>
 
 #define OBJECT_PATH "resources/objects/%s.lua"
