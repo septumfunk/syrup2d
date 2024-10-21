@@ -9,7 +9,7 @@ out vec4 f_tint;
 uniform mat4 model_matrix;
 
 void main() {
-    gl_Position = model_matrix * projection * camera * vec4(position, 0.0, 1.0);
+    gl_Position = projection * camera * model_matrix * vec4(position, 0.0, 1.0);
     f_texcoord = texcoord;
     f_tint = tint;
 }

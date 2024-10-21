@@ -73,7 +73,7 @@ int api_graphics_draw_sprite_pro(lua_State *L) {
         resource_manager_sprite(luaL_checkstring(L, 1)),
         luaL_checknumber(L, 2),
         luaL_checknumber(L, 3),
-        luaL_checkinteger(L, 4),
+        luaL_checknumber(L, 4),
         luaL_checknumber(L, 5),
         luaL_checknumber(L, 6),
         luaL_checknumber(L, 7),

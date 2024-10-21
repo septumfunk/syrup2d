@@ -137,21 +137,24 @@ void sprite_draw_pro(sprite_t *this, float x, float y, float x_scale, float y_sc
     float frame_width = 1.0f / this->data.frame_count;
     float offset = frame_index * frame_width;
 
+    float half_width = this->data.width / this->data.frame_count / 2;
+    float half_height = this->data.height / 2;
+
     mat4 model_matrix;
     glm_mat4_identity(model_matrix);
+    glm_translate(model_matrix, (vec3) { x + half_width, y + half_height, 0 });
+    glm_rotate(model_matrix, glm_rad(rotation), (vec3) { 0, 0, 1 });
     glm_scale(model_matrix, (vec3) { x_scale, y_scale, 1 });
-    glm_rotate_at(model_matrix, (vec3) { this->data.width / 2, this->data.height / 2 }, glm_rad(rotation), (vec3) { 0, 0, 1 });
     renderer_uniform_mat4("sprite", "model_matrix", model_matrix);
 
-    float true_width = this->data.frame_count == 0 ? this->data.width : this->data.width / this->data.frame_count;
     float verts[] = {
-        x, y, offset, 0.0f, t.r, t.g, t.b, t.a, // Top Left
-        x + true_width, y, offset + frame_width, 0.0f, t.r, t.g, t.b, t.a, // Top Right
-        x, y + this->data.height, offset, 1.0f, t.r, t.g, t.b, t.a, // Bottom Left
+        -half_width, -half_height, offset, 0.0f, t.r, t.g, t.b, t.a, // Top Left
+        half_width, -half_height, offset + frame_width, 0.0f, t.r, t.g, t.b, t.a, // Top Right
+        -half_width,  half_height, offset, 1.0f, t.r, t.g, t.b, t.a, // Bottom Left
 
-        x + true_width, y + this->data.height, offset + frame_width, 1.0f, t.r, t.g, t.b, t.a, // Bottom Right
-        x + true_width, y,  offset + frame_width, 0.0f, t.r, t.g, t.b, t.a, // Top Right
-        x, y + this->data.height, offset, 1.0f, t.r, t.g, t.b, t.a,  // Bottom Left
+        half_width, half_height, offset + frame_width, 1.0f, t.r, t.g, t.b, t.a, // Bottom Right
+        half_width, -half_height,  offset + frame_width, 0.0f, t.r, t.g, t.b, t.a, // Top Right
+        -half_width, half_height, offset, 1.0f, t.r, t.g, t.b, t.a,  // Bottom Left
     };
 
     glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_DYNAMIC_DRAW);

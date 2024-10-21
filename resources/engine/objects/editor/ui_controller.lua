@@ -4,6 +4,11 @@ return {
     depth = -999,
     taskbar_padding = 1,
 
+    rotation = 0,
+    rotation_speed = 2,
+    y_scale = 1,
+    x_scale = 1,
+
     start = function(self)
         self.wallpaper = syrup.objects.new("editor/wallpaper", 0, 0)
 
@@ -48,6 +53,34 @@ return {
         end
     end,
 
+    update = function(self)
+        if syrup.input.is_key_down(syrup.input.key.a) then
+            self.rotation = self.rotation - self.rotation_speed
+            if self.rotation < 0 then
+                self.rotation = self.rotation + 360
+            end
+        end
+        if syrup.input.is_key_down(syrup.input.key.d) then
+            self.rotation = self.rotation + self.rotation_speed
+            if self.rotation > 360 then
+                self.rotation = self.rotation - 360
+            end
+        end
+
+        if syrup.input.is_key_down(syrup.input.key.right) then
+            self.x_scale = self.x_scale + 0.1
+        end
+        if syrup.input.is_key_down(syrup.input.key.left) then
+            self.x_scale = math.max(self.x_scale - 0.1, 0)
+        end
+        if syrup.input.is_key_down(syrup.input.key.up) then
+            self.y_scale = self.y_scale + 0.1
+        end
+        if syrup.input.is_key_down(syrup.input.key.down) then
+            self.y_scale = math.max(self.y_scale - 0.1, 0)
+        end
+    end,
+
     draw_ui = function(self)
         syrup.graphics.draw_rectangle(
             0,
@@ -71,6 +104,6 @@ return {
             ui_color_primary
         )
 
-        syrup.graphics.draw_sprite_pro("vap", 0, 0, 2, 1, 25, 0, { r = 255, g = 255, b = 255, a = 255 })
+        syrup.graphics.draw_sprite_pro("vap", 250, 250, self.x_scale, self.y_scale, self.rotation, 0, { r = 255, g = 255, b = 255, a = 255 })
     end,
 }
