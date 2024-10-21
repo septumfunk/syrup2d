@@ -12,7 +12,7 @@ return {
     start = function(self)
         self.wallpaper = syrup.objects.new("editor/wallpaper", 0, 0)
 
-        self.cmd_button = syrup.objects.new("editor/button", 0, 0)
+        self.cmd_button = syrup.objects.new("editor/button", -999, -999)
         self.cmd_button:set_text("Command")
         self.cmd_button.x = self.taskbar_padding
         self.cmd_button.y = syrup.dimensions.height - self.cmd_button.height - self.taskbar_padding
@@ -34,22 +34,29 @@ return {
                 self.cmd_button.command = nil
             end
             if self.cmd_button.command == nil then return end
+            self.cmd_button.command:add_entry("Edit Game Data", function(_)
+                local window = syrup.objects.new("editor/game_data", -999, -999)
+                if window == nil then return end
+                window.x = syrup.dimensions.width / 2 - window.width / 2
+                window.y = syrup.dimensions.height / 2 - window.height / 2
+                syrup.objects.delete(self.cmd_button.command.id)
+            end)
             self.cmd_button.command:add_entry("View Sprite", function(_)
-                local window = syrup.objects.new("editor/viewer", 0, 0)
+                local window = syrup.objects.new("editor/viewer", -999, -999)
                 if window == nil then return end
                 window.x = syrup.dimensions.width / 2 - window.width / 2
                 window.y = syrup.dimensions.height / 2 - window.height / 2
                 syrup.objects.delete(self.cmd_button.command.id)
             end)
             self.cmd_button.command:add_entry("Import Sprite", function(_)
-                local window = syrup.objects.new("editor/importer", 0, 0)
+                local window = syrup.objects.new("editor/importer", -999, -999)
                 if window == nil then return end
                 window.x = syrup.dimensions.width / 2 - window.width / 2
                 window.y = syrup.dimensions.height / 2 - window.height / 2
                 syrup.objects.delete(self.cmd_button.command.id)
             end)
             self.cmd_button.command:add_entry("Spawn Object", function(_)
-                local window = syrup.objects.new("editor/spawner", 0, 0)
+                local window = syrup.objects.new("editor/spawner", -999, -999)
                 if window == nil then return end
                 window.x = syrup.dimensions.width / 2 - window.width / 2
                 window.y = syrup.dimensions.height / 2 - window.height / 2

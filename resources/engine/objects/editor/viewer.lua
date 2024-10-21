@@ -12,11 +12,11 @@ return {
         self:base_start()
         self:set_title("View Sprite")
 
-        self.sprite_input = syrup.objects.new("editor/textbox", 0, 0)
+        self.sprite_input = syrup.objects.new("editor/textbox", -999, -999)
         self.sprite_input.default = "Sprite Name..."
         self.sprite_input.centered = true
 
-        self.view_button = syrup.objects.new("editor/button", 0, 0)
+        self.view_button = syrup.objects.new("editor/button", -999, -999)
         self.view_button:set_text("View")
         self.view_button.centered = true
         self.view_button.on_click = function(_)
@@ -53,7 +53,7 @@ return {
             y_scale = (self.height - 10 - self.height / 3) / dimensions.height
         end
 
-        syrup.graphics.draw_sprite_pro(self.sprite, self.x + self.width / 2 - dimensions.width * x_scale / 2, self.y + 5, x_scale, y_scale, 0, 0, ui_color_white)
+        syrup.graphics.draw_sprite_pro(self.sprite, self.x + self.width / 2 - dimensions.width * x_scale / 2, self.y + 5, x_scale, y_scale, -999, -999, ui_color_white)
     end,
 
     clean_up = function(self)

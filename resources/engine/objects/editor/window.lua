@@ -13,7 +13,7 @@ return {
     start = function(self)
         self:set_title("Window")
 
-        self.close_button = syrup.objects.new("editor/button", 0, 0)
+        self.close_button = syrup.objects.new("editor/button", -999, -999)
         self.close_button.padding = 0
         self.close_button:set_text("X")
         self.close_button.on_click = function(_)

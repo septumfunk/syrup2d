@@ -7,22 +7,22 @@ return {
         self:base_start()
         self:set_title("Import Sprite")
 
-        self.name_input = syrup.objects.new("editor/textbox", 0, 0)
+        self.name_input = syrup.objects.new("editor/textbox", -999, -999)
         self.name_input.centered = true
         self.name_input.default = "Sprite Name..."
         self.min_width = self.name_input.width + 20
 
-        self.frame_count_input = syrup.objects.new("editor/textbox", 0, 0)
+        self.frame_count_input = syrup.objects.new("editor/textbox", -999, -999)
         self.frame_count_input.centered = true
         self.frame_count_input.limit = 3
         self.frame_count_input.default = "Frames"
 
-        self.frame_delay_input = syrup.objects.new("editor/textbox", 0, 0)
+        self.frame_delay_input = syrup.objects.new("editor/textbox", -999, -999)
         self.frame_delay_input.centered = true
         self.frame_delay_input.limit = 3
         self.frame_delay_input.default = "Delay"
 
-        self.spawn_button = syrup.objects.new("editor/button", 0, 0)
+        self.spawn_button = syrup.objects.new("editor/button", -999, -999)
         self.spawn_button.centered = true
         self.spawn_button:set_text("Import")
         self.spawn_button.on_click = function(_)

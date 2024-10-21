@@ -7,22 +7,22 @@ return {
         self:base_start()
         self:set_title("Spawn Object")
 
-        self.type_input = syrup.objects.new("editor/textbox", 0, 0)
+        self.type_input = syrup.objects.new("editor/textbox", -999, -999)
         self.type_input.centered = true
         self.type_input.default = "Object Type..."
         self.min_width = self.type_input.width + 20
 
-        self.x_input = syrup.objects.new("editor/textbox", 0, 0)
+        self.x_input = syrup.objects.new("editor/textbox", -999, -999)
         self.x_input.centered = true
         self.x_input.limit = 5
         self.x_input.default = "X Pos"
 
-        self.y_input = syrup.objects.new("editor/textbox", 0, 0)
+        self.y_input = syrup.objects.new("editor/textbox", -999, -999)
         self.y_input.centered = true
         self.y_input.limit = 5
         self.y_input.default = "Y Pos"
 
-        self.spawn_button = syrup.objects.new("editor/button", 0, 0)
+        self.spawn_button = syrup.objects.new("editor/button", -999, -999)
         self.spawn_button.centered = true
         self.spawn_button:set_text("Spawn")
         self.spawn_button.on_click = function(_)
@@ -52,7 +52,7 @@ return {
 
     draw_ui = function(self)
         self:base_draw_ui()
-        syrup.graphics.draw_text("ui_font", self.x + self.width / 2 - ui_text_size.width / 2, self.y + self.height / 2 - ui_text_size.height / 2, "x", ui_color_black)
+        syrup.graphics.draw_text("ui_font", self.x + self.width / 2 - ui_text_size.width / 2, self.y + self.height / 2 - ui_text_size.height / 2, ",", ui_color_black)
     end,
 
     clean_up = function(self)

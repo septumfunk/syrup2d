@@ -29,7 +29,7 @@ return {
     end,
 
     add_entry = function(self, text, on_click)
-        local object = syrup.objects.new("editor/button", 0, 0)
+        local object = syrup.objects.new("editor/button", -999, -999)
         if object == nil then return end
 
         object:set_text(text)
