@@ -37,11 +37,11 @@ return {
         self.type_input.y = self.y + self.height / 4
         self.type_input:stick(self)
 
-        self.x_input.x = self.x + self.width / 2 - self.x_input.width / 2 - ui_text_size.width
+        self.x_input.x = self.x + self.width / 2 - self.x_input.width / 2 - syrup.ui.font_size.width
         self.x_input.y = self.y + self.height / 2
         self.x_input:stick(self)
 
-        self.y_input.x = self.x + self.width / 2 + self.y_input.width / 2 + ui_text_size.width
+        self.y_input.x = self.x + self.width / 2 + self.y_input.width / 2 + syrup.ui.font_size.width
         self.y_input.y = self.y + self.height / 2
         self.y_input:stick(self)
 
@@ -52,7 +52,7 @@ return {
 
     draw_ui = function(self)
         self:base_draw_ui()
-        syrup.graphics.draw_text("ui_font", self.x + self.width / 2 - ui_text_size.width / 2, self.y + self.height / 2 - ui_text_size.height / 2, ",", ui_color_black)
+        syrup.graphics.draw_text("ui_font", self.x + self.width / 2 - syrup.ui.font_size.width / 2, self.y + self.height / 2 - syrup.ui.font_size.height / 2, ",", syrup.ui.black)
     end,
 
     clean_up = function(self)

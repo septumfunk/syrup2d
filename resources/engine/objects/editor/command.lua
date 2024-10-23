@@ -50,7 +50,7 @@ return {
                 longest = string.len(entry._text)
             end
         end
-        self.width = longest * ui_text_size.width
+        self.width = longest * syrup.ui.font_size.width
 
         for _, entry in ipairs(self._entries) do
             entry:set_width(self.width)

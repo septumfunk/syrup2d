@@ -36,17 +36,17 @@ return {
                 syrup.input.set_cursor(syrup.input.cursor.pointer)
             end
             if self.stick_down or syrup.input.is_mouse_button_down(syrup.input.mouse_button.left) then
-                syrup.graphics.draw_rectangle(x, y, self.width, self.height, ui_color_black)
-                syrup.graphics.draw_rectangle(x + self.border, y + self.border, self.width - self.border, self.height - self.border, ui_color_white)
-                syrup.graphics.draw_rectangle(x + self.border, y + self.border, self.width - self.border * 2, self.height - self.border * 2, ui_color_primary)
-                syrup.graphics.draw_text("ui_font", x + self.padding + self.border, y + self.padding + self.border, self._text, ui_color_black)
+                syrup.graphics.draw_rectangle(x, y, self.width, self.height, syrup.ui.black)
+                syrup.graphics.draw_rectangle(x + self.border, y + self.border, self.width - self.border, self.height - self.border, syrup.ui.white)
+                syrup.graphics.draw_rectangle(x + self.border, y + self.border, self.width - self.border * 2, self.height - self.border * 2, syrup.ui.primary)
+                syrup.graphics.draw_text("ui_font", x + self.padding + self.border, y + self.padding + self.border, self._text, syrup.ui.black)
                 return
             end
         end
-        syrup.graphics.draw_rectangle(x, y, self.width, self.height, ui_color_white)
-        syrup.graphics.draw_rectangle(x + self.border, y + self.border, self.width - self.border, self.height - self.border, ui_color_black)
-        syrup.graphics.draw_rectangle(x + self.border, y + self.border, self.width - self.border * 2, self.height - self.border * 2, ui_color_primary)
-        syrup.graphics.draw_text("ui_font", x + self.border + self.padding, y + self.border + self.padding, self._text, ui_color_black)
+        syrup.graphics.draw_rectangle(x, y, self.width, self.height, syrup.ui.white)
+        syrup.graphics.draw_rectangle(x + self.border, y + self.border, self.width - self.border, self.height - self.border, syrup.ui.black)
+        syrup.graphics.draw_rectangle(x + self.border, y + self.border, self.width - self.border * 2, self.height - self.border * 2, syrup.ui.primary)
+        syrup.graphics.draw_text("ui_font", x + self.border + self.padding, y + self.border + self.padding, self._text, syrup.ui.black)
     end,
 
     clean_up = function(self)
@@ -61,8 +61,8 @@ return {
 
     set_text = function(self, text)
         self._text = text
-        self.width = string.len(text) * ui_text_size.width + self.padding * 2 + self.border * 2
-        self.height = ui_text_size.height + self.padding * 2 + self.border * 2
+        self.width = string.len(text) * syrup.ui.font_size.width + self.padding * 2 + self.border * 2
+        self.height = syrup.ui.font_size.height + self.padding * 2 + self.border * 2
     end,
 
     set_width = function(self, width)
@@ -70,6 +70,6 @@ return {
             error("Uh oh!")
         end
         self.width = width + self.padding * 2 + self.border * 2
-        self.height = ui_text_size.height + self.padding * 2 + self.border * 2
+        self.height = syrup.ui.font_size.height + self.padding * 2 + self.border * 2
     end,
 }

@@ -128,33 +128,33 @@ void sprite_draw(sprite_t *this, float x, float y, uint8_t frame_index) {
 void sprite_draw_pro(sprite_t *this, float x, float y, float x_scale, float y_scale, float rotation, uint8_t frame_index, color_t tint) {
     renderer_bind("sprite");
     gl_color_t t = color_to_gl(tint);
-    glBindTexture(GL_TEXTURE_2D, this->texture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glBindTexture(GL_TEXTURE_2D, this->texture);
 
     float frame_width = 1.0f / this->data.frame_count;
     float offset = frame_index * frame_width;
 
-    float half_width = floor(this->data.width / this->data.frame_count / 2);
-    float half_height = floor(this->data.height / 2);
+    float half_width = this->data.width / this->data.frame_count / 2;
+    float half_height = this->data.height / 2;
 
     mat4 model_matrix;
     glm_mat4_identity(model_matrix);
-    glm_translate(model_matrix, (vec3) { x + half_width * x_scale, y + half_height * y_scale, 0 });
+    glm_translate(model_matrix, (vec3) { round(x + half_width * x_scale), round(y + half_height * y_scale), 0 });
     glm_rotate(model_matrix, glm_rad(rotation), (vec3) { 0, 0, 1 });
     glm_scale(model_matrix, (vec3) { x_scale, y_scale, 1 });
     renderer_uniform_mat4("sprite", "model_matrix", model_matrix);
 
     float verts[] = {
-        -half_width, -half_height, offset, 0.0f, t.r, t.g, t.b, t.a, // Top Left
-        half_width, -half_height, offset + frame_width, 0.0f, t.r, t.g, t.b, t.a, // Top Right
-        -half_width,  half_height, offset, 1.0f, t.r, t.g, t.b, t.a, // Bottom Left
+        -half_width + 0.375, -half_height + 0.375, offset, 0.0f, t.r, t.g, t.b, t.a, // Top Left
+        half_width + 0.375, -half_height + 0.375, offset + frame_width, 0.0f, t.r, t.g, t.b, t.a, // Top Right
+        -half_width + 0.375,  half_height + 0.375, offset, 1.0f, t.r, t.g, t.b, t.a, // Bottom Left
 
-        half_width, half_height, offset + frame_width, 1.0f, t.r, t.g, t.b, t.a, // Bottom Right
-        half_width, -half_height,  offset + frame_width, 0.0f, t.r, t.g, t.b, t.a, // Top Right
-        -half_width, half_height, offset, 1.0f, t.r, t.g, t.b, t.a,  // Bottom Left
+        half_width + 0.375, half_height + 0.375, offset + frame_width, 1.0f, t.r, t.g, t.b, t.a, // Bottom Right
+        half_width + 0.375, -half_height + 0.375,  offset + frame_width, 0.0f, t.r, t.g, t.b, t.a, // Top Right
+        -half_width + 0.375, half_height + 0.375, offset, 1.0f, t.r, t.g, t.b, t.a,  // Bottom Left
     };
 
     glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_DYNAMIC_DRAW);

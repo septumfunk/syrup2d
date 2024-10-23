@@ -108,9 +108,10 @@ void renderer_init_framebuffer(void) {
     glGenFramebuffers(1, &renderer.fbo);
     glGenTextures(2, &renderer.color_attachment);
     glBindFramebuffer(GL_FRAMEBUFFER, renderer.fbo);
+    glViewport(0, 0, resource_manager.game_data.width, resource_manager.game_data.height);
 
     glBindTexture(GL_TEXTURE_2D, renderer.color_attachment);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, renderer.window_dimensions.width, renderer.window_dimensions.height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, resource_manager.game_data.width, resource_manager.game_data.height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderer.color_attachment, 0);
@@ -192,6 +193,23 @@ void renderer_update_buffer(void) {
 
 void renderer_draw_framebuffer(void) {
     renderer_bind("framebuffer");
+    float framebuffer_aspect = (float)resource_manager.game_data.width / resource_manager.game_data.height;
+    float window_aspect = (float)renderer.window_dimensions.width / renderer.window_dimensions.height;
+
+    int viewport_width, viewport_height;
+    int x_offset = 0, y_offset = 0;
+
+    if (window_aspect > framebuffer_aspect) {
+        viewport_height = renderer.window_dimensions.height;
+        viewport_width = (int)(framebuffer_aspect * renderer.window_dimensions.height);
+        x_offset = (renderer.window_dimensions.width - viewport_width) / 2;
+    } else {
+        viewport_width = renderer.window_dimensions.width;
+        viewport_height = (int)(renderer.window_dimensions.width / framebuffer_aspect);
+        y_offset = (renderer.window_dimensions.height - viewport_height) / 2;
+    }
+
+    glViewport(x_offset, y_offset, viewport_width, viewport_height);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glClearColor(0, 0, 0, 255);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -200,6 +218,7 @@ void renderer_draw_framebuffer(void) {
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     glBindFramebuffer(GL_FRAMEBUFFER, renderer.fbo);
+    glViewport(0, 0, resource_manager.game_data.width, resource_manager.game_data.height);
     glClearColor(renderer.clear_color.r, renderer.clear_color.g, renderer.clear_color.b, renderer.clear_color.a);
     glClear(GL_COLOR_BUFFER_BIT);
 }
@@ -277,6 +296,8 @@ void renderer_fbo_mouse_position(double *x, double *y) {
 
 void renderer_draw_rectangle(float x, float y, float width, float height, color_t color) {
     gl_color_t c = color_to_gl(color);
+    x = round(x);
+    y = round(y);
     float verts[] = {
         x, y, c.r, c.g, c.b, c.a, // Top Left
         x + width, y, c.r, c.g, c.b, c.a, // Top Right
@@ -323,16 +344,15 @@ void _renderer_framebuffer_resize_cb(unused GLFWwindow *handle, int width, int h
     if (window_aspect > framebuffer_aspect) {
         viewport_height = height;
         viewport_width = (int)(framebuffer_aspect * height);
-        x_offset = (width - viewport_width) / 2;  // Center horizontally
+        x_offset = (width - viewport_width) / 2;
     } else {
         viewport_width = width;
         viewport_height = (int)(width / framebuffer_aspect);
-        y_offset = (height - viewport_height) / 2;  // Center vertically
+        y_offset = (height - viewport_height) / 2;
     }
 
     glViewport(x_offset, y_offset, viewport_width, viewport_height);
     glBindTexture(GL_TEXTURE_2D, renderer.color_attachment);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 }
 
 void _renderer_error_cb(int error_code, const char* description) {

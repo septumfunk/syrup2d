@@ -1,4 +1,5 @@
 #include "resources.h"
+#include "../../engine.h"
 #include "../../resources/resource_manager.h"
 #include <lauxlib.h>
 #include <lua.h>
@@ -56,6 +57,7 @@ int api_resources_set_game_data(lua_State *L) {
     resource_manager.game_data.height = height;
     resource_manager.game_data.window_scale = window_scale;
     resource_manager_save_game_data("resources");
+    engine_stop();
 
     return 0;
 }

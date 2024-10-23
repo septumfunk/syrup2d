@@ -14,8 +14,6 @@ typedef struct shader_global_t {
 } shader_global_t;
 #pragma pack(pop)
 
-/// The engine's renderer system.
-/// Processes draw calls, dynamically loads shaders, manages camera, and manages the framebuffer.
 typedef struct renderer_t {
     // Window
     GLFWwindow *window_handle;

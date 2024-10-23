@@ -99,21 +99,21 @@ return {
             syrup.dimensions.height - self.cmd_button.height - self.taskbar_padding * 2 - 2,
             syrup.dimensions.width,
             self.cmd_button.height + self.taskbar_padding * 2,
-            ui_color_primary
+            syrup.ui.primary
         )
         syrup.graphics.draw_rectangle(
             0,
             syrup.dimensions.height - self.cmd_button.height - self.taskbar_padding * 2 - 1,
             syrup.dimensions.width,
             self.cmd_button.height + self.taskbar_padding * 2,
-            ui_color_white
+            syrup.ui.white
         )
         syrup.graphics.draw_rectangle(
             0,
             syrup.dimensions.height - self.cmd_button.height - self.taskbar_padding * 2,
             syrup.dimensions.width,
             self.cmd_button.height + self.taskbar_padding * 2,
-            ui_color_primary
+            syrup.ui.primary
         )
     end,
 }

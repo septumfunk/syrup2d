@@ -10,31 +10,37 @@ return {
         self:base_start()
         self:set_title("Edit Game Data")
 
+        local data = syrup.resources.get_game_data()
+
         self.title_input = syrup.objects.new("editor/textbox", -999, -999)
         self.title_input.centered = true
         self.title_input.default = "Title..."
         self.min_width = self.title_input.width + 20
+        self.title_input.text = data.title
 
         self.width_input = syrup.objects.new("editor/textbox", -999, -999)
         self.width_input.centered = true
         self.width_input.limit = 5
         self.width_input.default = "Width"
+        self.width_input.text = tostring(data.width)
 
         self.height_input = syrup.objects.new("editor/textbox", -999, -999)
         self.height_input.centered = true
         self.height_input.limit = 5
         self.height_input.default = "Height"
+        self.height_input.text = tostring(data.height)
 
         self.scale_input = syrup.objects.new("editor/textbox", -999, -999)
         self.scale_input.centered = true
         self.scale_input.limit = 5
         self.scale_input.default = "Scale"
+        self.scale_input.text = tostring(data.window_scale)
 
         self.save_button = syrup.objects.new("editor/button", -999, -999)
         self.save_button.centered = true
         self.save_button:set_text("Save and Exit")
         self.save_button.on_click = function(_)
-            self:save_()
+            self:save()
         end
     end,
 
@@ -45,11 +51,11 @@ return {
         self.title_input.y = self.y + self.height / 5
         self.title_input:stick(self)
 
-        self.width_input.x = self.x + self.width / 2 - self.width_input.width / 2 - ui_text_size.width
+        self.width_input.x = self.x + self.width / 2 - self.width_input.width / 2 - syrup.ui.font_size.width
         self.width_input.y = self.y + self.height / 3
         self.width_input:stick(self)
 
-        self.height_input.x = self.x + self.width / 2 + self.height_input.width / 2 + ui_text_size.width
+        self.height_input.x = self.x + self.width / 2 + self.height_input.width / 2 + syrup.ui.font_size.width
         self.height_input.y = self.y + self.height / 3
         self.height_input:stick(self)
 
@@ -64,7 +70,7 @@ return {
 
     draw_ui = function(self)
         self:base_draw_ui()
-        syrup.graphics.draw_text("ui_font", self.x + self.width / 2 - ui_text_size.width / 2, self.width_input.y - ui_text_size.height / 2, "x", ui_color_black)
+        syrup.graphics.draw_text("ui_font", self.x + self.width / 2 - syrup.ui.font_size.width / 2, self.width_input.y - syrup.ui.font_size.height / 2, "x", syrup.ui.black)
     end,
 
     clean_up = function(self)
@@ -76,27 +82,29 @@ return {
         syrup.objects.delete(self.save_button.id)
     end,
 
-    spawn_object = function(self)
+    save = function(self)
         if string.len(self.title_input.text) == 0 or string.len(self.width_input.text) == 0 or string.len(self.height_input.text) == 0 then
             return
         end
 
-        local x = tonumber(self.width_input.text)
-        if not x then
+        local width = tonumber(self.width_input.text)
+        if not width then
             self.width_input.text = ""
             return
         end
 
-        local y = tonumber(self.height_input.text)
-        if not y then
+        local height = tonumber(self.height_input.text)
+        if not height then
             self.height_input.text = ""
             return
         end
 
-        local object = syrup.objects.new(self.title_input.text, x, y)
-        if not object then
-            self.title_input.text = ""
+        local scale = tonumber(self.scale_input.text)
+        if not scale then
+            self.scale_input.text = ""
             return
         end
+
+        syrup.resources.set_game_data(self.title_input.text, width, height, scale)
     end,
 }

@@ -37,11 +37,11 @@ return {
         self.name_input.y = self.y + self.height / 4
         self.name_input:stick(self)
 
-        self.frame_count_input.x = self.x + self.width / 2 - self.frame_count_input.width / 2 - ui_text_size.width
+        self.frame_count_input.x = self.x + self.width / 2 - self.frame_count_input.width / 2 - syrup.ui.font_size.width
         self.frame_count_input.y = self.y + self.height / 2
         self.frame_count_input:stick(self)
 
-        self.frame_delay_input.x = self.x + self.width / 2 + self.frame_delay_input.width / 2 + ui_text_size.width
+        self.frame_delay_input.x = self.x + self.width / 2 + self.frame_delay_input.width / 2 + syrup.ui.font_size.width
         self.frame_delay_input.y = self.y + self.height / 2
         self.frame_delay_input:stick(self)
 
@@ -52,7 +52,7 @@ return {
 
     draw_ui = function(self)
         self:base_draw_ui()
-        syrup.graphics.draw_text("ui_font", self.x + self.width / 2 - ui_text_size.width / 2, self.y + self.height / 2 - ui_text_size.height / 2, "x", ui_color_black)
+        syrup.graphics.draw_text("ui_font", self.x + self.width / 2 - syrup.ui.font_size.width / 2, self.y + self.height / 2 - syrup.ui.font_size.height / 2, "x", syrup.ui.black)
     end,
 
     clean_up = function(self)

@@ -87,12 +87,12 @@ return {
 
     draw_ui = function(self)
         if self.offset ~= nil then
-            syrup.graphics.draw_rectangle(self.x, self.y, self.size.width, self.size.height, ui_color_black)
-            syrup.graphics.draw_rectangle(self.x + self.border, self.y + self.border, self.size.width - self.border, self.size.height - self.border, ui_color_white)
+            syrup.graphics.draw_rectangle(self.x, self.y, self.size.width, self.size.height, syrup.ui.black)
+            syrup.graphics.draw_rectangle(self.x + self.border, self.y + self.border, self.size.width - self.border, self.size.height - self.border, syrup.ui.white)
         else
-            syrup.graphics.draw_rectangle(self.x, self.y, self.size.width, self.size.height, ui_color_white)
-            syrup.graphics.draw_rectangle(self.x + self.border, self.y + self.border, self.size.width - self.border, self.size.height - self.border, ui_color_black)
+            syrup.graphics.draw_rectangle(self.x, self.y, self.size.width, self.size.height, syrup.ui.white)
+            syrup.graphics.draw_rectangle(self.x + self.border, self.y + self.border, self.size.width - self.border, self.size.height - self.border, syrup.ui.black)
         end
-        syrup.graphics.draw_rectangle(self.x + self.border, self.y + self.border, self.size.width - self.border * 2, self.size.height - self.border * 2, ui_color_primary)
+        syrup.graphics.draw_rectangle(self.x + self.border, self.y + self.border, self.size.width - self.border * 2, self.size.height - self.border * 2, syrup.ui.primary)
     end,
 }
