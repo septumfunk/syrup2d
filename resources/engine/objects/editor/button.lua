@@ -8,6 +8,8 @@ return {
     held = false,
     stick_down = false,
 
+    cursor = syrup.input.cursor.pointer,
+
     start = function(self)
         self:set_text("Default")
     end,
@@ -31,22 +33,12 @@ return {
             y = y - self.height / 2
         end
 
-        if self.stick_down or self.hovering then
-            if self.hovering then
-                syrup.input.set_cursor(syrup.input.cursor.pointer)
-            end
-            if self.stick_down or syrup.input.is_mouse_button_down(syrup.input.mouse_button.left) then
-                syrup.graphics.draw_rectangle(x, y, self.width, self.height, syrup.ui.black)
-                syrup.graphics.draw_rectangle(x + self.border, y + self.border, self.width - self.border, self.height - self.border, syrup.ui.white)
-                syrup.graphics.draw_rectangle(x + self.border, y + self.border, self.width - self.border * 2, self.height - self.border * 2, syrup.ui.primary)
-                syrup.graphics.draw_text("ui_font", x + self.padding + self.border, y + self.padding + self.border, self._text, syrup.ui.black)
-                return
-            end
+        syrup.ui.draw_classic_box(x, y, self.width + self.border * 2, self.height + self.border * 2, self.held or self.stick_down)
+        if self.stick_down or self.held then
+            syrup.graphics.draw_text("ui_font", x + self.padding + self.border + 1, y + self.padding + self.border + 1, self._text, syrup.ui.black)
+        else
+            syrup.graphics.draw_text("ui_font", x + self.padding + self.border, y + self.padding + self.border, self._text, syrup.ui.black)
         end
-        syrup.graphics.draw_rectangle(x, y, self.width, self.height, syrup.ui.white)
-        syrup.graphics.draw_rectangle(x + self.border, y + self.border, self.width - self.border, self.height - self.border, syrup.ui.black)
-        syrup.graphics.draw_rectangle(x + self.border, y + self.border, self.width - self.border * 2, self.height - self.border * 2, syrup.ui.primary)
-        syrup.graphics.draw_text("ui_font", x + self.border + self.padding, y + self.border + self.padding, self._text, syrup.ui.black)
     end,
 
     clean_up = function(self)

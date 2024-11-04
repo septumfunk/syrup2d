@@ -6,11 +6,12 @@
 #include <lua.h>
 #include <stdint.h>
 
-#define CONFIG_VERSION 0.2f
+#define CONFIG_VERSION 0.3f
 typedef struct syrup_config_t {
     float version;
     char *title;
     uint16_t width, height;
+    bool fixed_size;
     uint8_t window_scale;
 } syrup_config_t;
 

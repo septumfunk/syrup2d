@@ -24,8 +24,9 @@ return {
         and syrup.mouse.x < x + self.width
         and syrup.mouse.y > y
         and syrup.mouse.y < y + self.height
+
         if hovering and not self.hovering then
-            syrup.input.set_cursor(syrup.input.cursor.pointer)
+            syrup.input.set_cursor(self.cursor)
         end
         if self.hovering and not hovering then
             syrup.input.set_cursor(syrup.input.cursor.normal)

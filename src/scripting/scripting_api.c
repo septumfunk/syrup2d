@@ -41,13 +41,6 @@ void scripting_api_init_globals(void) {
     lua_getglobal(scripting_api.state, "syrup");
 
     lua_newtable(scripting_api.state);
-    lua_pushnumber(scripting_api.state, resource_manager.game_data.width);
-    lua_setfield(scripting_api.state, -2, "width");
-    lua_pushnumber(scripting_api.state, resource_manager.game_data.height);
-    lua_setfield(scripting_api.state, -2, "height");
-    lua_setfield(scripting_api.state, -2, "dimensions");
-
-    lua_newtable(scripting_api.state);
     lua_setfield(scripting_api.state, -2, "cache");
     lua_newtable(scripting_api.state);
     lua_setfield(scripting_api.state, -2, "instances");
@@ -140,7 +133,16 @@ void scripting_api_update_globals(void) {
     lua_setfield(scripting_api.state, -2, "x");
     lua_pushnumber(scripting_api.state, y);
     lua_setfield(scripting_api.state, -2, "y");
-    lua_pop(scripting_api.state, 2);
+    lua_pop(scripting_api.state, 1);
+
+    lua_newtable(scripting_api.state);
+    lua_pushnumber(scripting_api.state, resource_manager.game_data.fixed_size ? resource_manager.game_data.width : renderer.window_dimensions.width);
+    lua_setfield(scripting_api.state, -2, "width");
+    lua_pushnumber(scripting_api.state, resource_manager.game_data.fixed_size ? resource_manager.game_data.height : renderer.window_dimensions.height);
+    lua_setfield(scripting_api.state, -2, "height");
+    lua_setfield(scripting_api.state, -2, "dimensions");
+
+    lua_pop(scripting_api.state, 1);
 }
 
 void scripting_api_draw(void) {

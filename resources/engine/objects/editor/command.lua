@@ -38,7 +38,8 @@ return {
 
         for i, entry in ipairs(self._entries) do
             entry.x = self.x
-            entry.y = self.y - entry.height * (i-1)
+            entry.y = self.y - (entry.height + entry.border * 2) * (i-1)
+            entry:stick(self)
         end
         self:_update_width()
     end,

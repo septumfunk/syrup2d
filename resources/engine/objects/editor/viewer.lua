@@ -53,7 +53,7 @@ return {
             y_scale = (self.height - 10 - self.height / 3) / dimensions.height
         end
 
-        syrup.graphics.draw_sprite_pro(self.sprite, self.x + self.width / 2 - dimensions.width * x_scale / 2, self.y + 5, x_scale, y_scale, -999, -999, syrup.ui.white)
+        syrup.graphics.draw_sprite_pro(self.sprite, self.x + self.width / 2 - dimensions.width * x_scale / 2, self.y + 5, x_scale, y_scale, 0, 0, syrup.ui.white)
     end,
 
     clean_up = function(self)

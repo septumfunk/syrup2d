@@ -219,7 +219,7 @@ return {
         self.width = math.max(self.width, self.min_width)
         self.height = math.max(self.height, self.min_height)
 
-        self.close_button.x = self.x + self.width + self.padding * 2 - self.close_button.width - self.border
+        self.close_button.x = self.x + self.width + self.padding * 2 - self.close_button.width - self.close_button.border - self.border
         self.close_button.y = self.y - syrup.ui.font_size.height - self.padding * 3 - self.border
         self.close_button:stick(self)
     end,
@@ -230,20 +230,14 @@ return {
         local border_y = self.y - self.padding * 3 - self.border - titlebar_height
         local border_width = self.width + self.padding * 4 + self.border * 2
         local border_height = self.height + self.padding * 5 + self.border * 2 + titlebar_height
-        local padding_x = self.x - self.padding * 2
-        local padding_y = self.y - self.padding * 3 - titlebar_height
         local padding_width = self.width + self.padding * 4
-        local padding_height = self.height + self.padding * 5 + titlebar_height
 
-        syrup.graphics.draw_rectangle(border_x, border_y, border_width, border_height, syrup.ui.white) -- White of border
-        syrup.graphics.draw_rectangle(border_x + 1, border_y + 1, border_width - self.border, border_height - self.border, syrup.ui.black) -- Black of border
-        syrup.graphics.draw_rectangle(padding_x, padding_y, padding_width, padding_height, syrup.ui.primary)
+        syrup.ui.draw_classic_box(border_x, border_y, border_width, border_height, false)
 
         syrup.graphics.draw_rectangle(self.x - self.padding, self.y - titlebar_height - self.padding * 2, padding_width - self.padding * 2, titlebar_height, syrup.ui.accent)
         syrup.graphics.draw_text("ui_font", self.x + self.padding, self.y - titlebar_height, self._title, syrup.ui.white)
 
-        syrup.graphics.draw_rectangle(self.x - self.padding, self.y - self.padding, self.width + self.padding * 2, self.height + self.padding * 2, syrup.ui.black)
-        syrup.graphics.draw_rectangle(self.x, self.y, self.width + self.padding, self.height + self.padding, syrup.ui.white)
+        syrup.ui.draw_classic_box(self.x - self.padding, self.y - self.padding, self.width + self.padding * 2, self.height + self.padding * 2, syrup.ui.black)
         syrup.graphics.draw_rectangle(self.x, self.y, self.width, self.height, syrup.ui.primary)
     end,
 

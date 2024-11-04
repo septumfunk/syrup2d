@@ -14,6 +14,15 @@
 #include <stddef.h>
 
 void engine_start() {
+    resource_manager.game_data = (syrup_config_t) {
+        .fixed_size = false,
+        .width = 1280,
+        .height = 720,
+        .window_scale = 1,
+        .title = "Syrup Editor",
+        .version = CONFIG_VERSION,
+    };
+    resource_manager_save_game_data("resources");
     resource_manager_init(GARBAGE_COLLECTOR_ENABLED);
     renderer_init();
     keyboard_mouse_init();
