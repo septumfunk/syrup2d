@@ -208,10 +208,10 @@ result_t scripting_api_push(const char *type, float x, float y) {
     hashtable_insert(&inherited, (void *)type, &t, sizeof(bool));
     uint32_t to_pop = 0;
     while (true) {
-        char *path = format(OBJECT_PATH, to_load);
+        char *path = format(OBJECT_PATH, resource_manager.folder, to_load);
         if (!fs_exists(path)) {
             free(path);
-            path = format(OBJECT_ENGINE_PATH, to_load);
+            path = format(OBJECT_ENGINE_PATH, resource_manager.folder, to_load);
         }
         if (luaL_dofile(scripting_api.state, path) != LUA_OK) {
             result_t res = result_error("LuaFileError", lua_tostring(scripting_api.state, -1));

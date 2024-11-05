@@ -4,8 +4,8 @@
 #include <lua_all.h>
 #include <stdint.h>
 
-#define OBJECT_PATH "resources/objects/%s.lua"
-#define OBJECT_ENGINE_PATH "resources/engine/objects/%s.lua"
+#define OBJECT_PATH "%s/objects/%s.lua"
+#define OBJECT_ENGINE_PATH "%s/.syrup/objects/%s.lua"
 
 typedef struct scripting_api_t {
     uint32_t current_id;

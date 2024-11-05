@@ -3,9 +3,9 @@
 #include "../graphics/color.h"
 #include "../structures/result.h"
 
-#define SPRITE_IMPORT_PATH "resources/import/%s.png"
-#define SPRITE_ENGINE_PATH "resources/engine/sprites/%s.spr.syr"
-#define SPRITE_PATH "resources/sprites/%s.spr.syr"
+#define SPRITE_IMPORT_PATH "%s/import/%s.png"
+#define SPRITE_ENGINE_PATH "%s/.syrup/sprites/%s.sys"
+#define SPRITE_PATH "%s/sprites/%s.sys"
 #define SPRITE_VERSION 1.1f
 #define SPRITE_DECAY_TIME 3.0f
 

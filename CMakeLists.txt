@@ -24,6 +24,7 @@ add_executable(${PROJECT_NAME}
     src/resources/fs.c
     src/resources/resource_manager.c
     src/resources/sprite.c
+    src/resources/scene.c
 
     src/scripting/object_manager.c
     src/scripting/scripting_api.c

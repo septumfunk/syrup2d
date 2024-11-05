@@ -3,9 +3,9 @@
 #include "../structures/result.h"
 #include "../structures/hashtable.h"
 
-#define VERTEX_SHADER_PATH "resources/engine/shaders/%s.vert"
-#define FRAGMENT_SHADER_PATH "resources/engine/shaders/%s.frag"
-#define GLOBAL_SHADER_PATH "resources/engine/shaders/global.glsl"
+#define VERTEX_SHADER_PATH "%s/.syrup/shaders/%s.vert"
+#define FRAGMENT_SHADER_PATH "%s/.syrup/shaders/%s.frag"
+#define GLOBAL_SHADER_PATH "%s/.syrup/shaders/global.glsl"
 
 /// OpenGL shader program, conveniently wrapped
 typedef struct shader_t {

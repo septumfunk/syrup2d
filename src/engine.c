@@ -3,6 +3,7 @@
 #include "graphics/renderer.h"
 #include "input/keyboard_mouse.h"
 #include "resources/resource_manager.h"
+#include "resources/scene.h"
 #include "scripting/scripting_api.h"
 #include <GLFW/glfw3.h>
 #include <lauxlib.h>
@@ -14,22 +15,15 @@
 #include <stddef.h>
 
 void engine_start() {
-    resource_manager.game_data = (syrup_config_t) {
-        .fixed_size = false,
-        .width = 1280,
-        .height = 720,
-        .window_scale = 1,
-        .title = "Syrup Editor",
-        .version = CONFIG_VERSION,
-    };
-    resource_manager_save_game_data("resources");
     resource_manager_init(GARBAGE_COLLECTOR_ENABLED);
     renderer_init();
     keyboard_mouse_init();
     scripting_api_init();
 
-    result_t res = scripting_api_create("editor/ui_controller", 0, 0);
-    panic(res);
+    scene_t scene;
+    panic(scene_load("awesome", &scene));
+
+    scene_spawn_instances(&scene);
 
     while (renderer_loop()) {
         // Update

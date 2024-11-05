@@ -3,6 +3,7 @@
 #include "../util/stringext.h"
 #include "../util/crypto.h"
 #include "../graphics/renderer.h"
+#include "../resources/resource_manager.h"
 #include <cglm/affine-pre.h>
 #include <cglm/mat4.h>
 #include <cglm/util.h>
@@ -16,11 +17,11 @@ result_t sprite_load(sprite_t *out, const char *name) {
     // Name
     out->name = calloc(1, strlen(name) + 1);
     strcpy(out->name, name);
-    char *path = format(SPRITE_PATH, name);
+    char *path = format(SPRITE_PATH, resource_manager.folder, name);
 
     if (!fs_exists(path)) {
         free(path);
-        path = format(SPRITE_ENGINE_PATH, name);
+        path = format(SPRITE_ENGINE_PATH, resource_manager.folder, name);
     }
 
     // Load file
@@ -61,7 +62,7 @@ result_t sprite_from_image(sprite_t *out, const char *name) {
     // Name
     out->name = calloc(1, strlen(name) + 1);
     strcpy(out->name, name);
-    char *path = format(SPRITE_IMPORT_PATH, name);
+    char *path = format(SPRITE_IMPORT_PATH, resource_manager.folder, name);
 
     // Load
     if (!fs_exists(path))
@@ -107,7 +108,7 @@ result_t sprite_save(sprite_t *this) {
     memcpy(head, this->image_data, img_size);
 
     // Write
-    char *path = format(SPRITE_PATH, this->name);
+    char *path = format(SPRITE_PATH, resource_manager.folder, this->name);
     result_t res = fs_save_checksum(path, buffer, buffer_size);
     if (res.is_error)
         return res;

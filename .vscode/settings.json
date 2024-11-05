@@ -4,7 +4,6 @@
         "undefined-field",
     ],
     "Lua.workspace.library": [
-        "engine/api/*",
-        "resources/engine/api/*"
+        "*/.syrup/api/*"
     ]
 }

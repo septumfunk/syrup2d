@@ -17,7 +17,13 @@ void resource_manager_init(bool garbage_collecter) {
     resource_manager.gc = garbage_collecter;
     resource_manager.sprite_table = hashtable_string();
     resource_manager.cursor_table = hashtable_arbitrary(sizeof(mouse_cursors_e));
-    resource_manager_load_game_data("resources");
+    resource_manager.folder = NULL;
+
+    result_t res = resource_manager_load_game_data("resources");
+    if (res.is_error) {
+        result_discard(res);
+        panic(resource_manager_load_game_data("editor"));
+    }
 }
 
 void resource_manager_cleanup(void) {
@@ -25,18 +31,21 @@ void resource_manager_cleanup(void) {
     hashtable_delete(&resource_manager.cursor_table);
 }
 
-void resource_manager_load_game_data(const char *folder) {
-    char *path = format("%s/game.syr", folder);
+result_t resource_manager_load_game_data(const char *folder) {
+    free(resource_manager.folder);
+    resource_manager.folder = _strdup(folder);
+
+    char *path = format(META_PATH, folder, folder);
     if (!fs_exists(path))
-        panic(result_error("DataNotFoundErr", "The game's resources could not be located. Please restore your resources or point the engine to them using the '-open' flag."));
+        return result_error("DataNotFoundErr", "The game's resources could not be located. Please verify the integrity of your copy of the game.");
 
     fs_size_t size;
     result_t res;
     char *buffer;
     if ((res = fs_load_checksum(path, &buffer, &size)).is_error) {
         if (result_match(res, "ChecksumCorruptError"))
-            panic(result_error("CorruptGameDataError", "Game data is corrupted. The engine can't start!"));
-        panic(res);
+            return result_error("CorruptGameDataError", "Game data is corrupted. The engine can't start!");
+        return res;
     }
 
     char *head = buffer;
@@ -62,6 +71,8 @@ void resource_manager_load_game_data(const char *folder) {
 
     free(path);
     free(buffer);
+
+    return result_no_error();
 }
 
 void resource_manager_save_game_data(const char *folder) {
@@ -78,7 +89,7 @@ void resource_manager_save_game_data(const char *folder) {
     char *buffer, *head;
     head = buffer = calloc(1, len);
 
-    *(float *)head = CONFIG_VERSION;
+    *(float *)head = META_VERSION;
     head += sizeof(float);
     strcpy(head, resource_manager.game_data.title);
     head += strlen(resource_manager.game_data.title) + 1;

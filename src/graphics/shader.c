@@ -1,6 +1,7 @@
 #include "shader.h"
 #include "../util/stringext.h"
 #include "../resources/fs.h"
+#include "../resources/resource_manager.h"
 #include <glad/glad.h>
 #include <stdlib.h>
 
@@ -8,7 +9,7 @@ result_t load_shader_file(GLuint *out, int type, const char *name) {
     *out = glCreateShader(type);
 
     // Source
-    char *path = format(type == GL_VERTEX_SHADER ? VERTEX_SHADER_PATH : FRAGMENT_SHADER_PATH, name);
+    char *path = format(type == GL_VERTEX_SHADER ? VERTEX_SHADER_PATH : FRAGMENT_SHADER_PATH, resource_manager.folder, name);
     char *source = NULL;
     if (!fs_exists(path))
         return result_error("ShaderNotFoundError", "The requested shader could not be found on the filesystem.");
@@ -21,7 +22,9 @@ result_t load_shader_file(GLuint *out, int type, const char *name) {
 
     // Prepend global
     char *global = NULL;
-    if (!fs_exists(GLOBAL_SHADER_PATH) || fs_load(GLOBAL_SHADER_PATH, &global, &size).is_error)
+    free(path);
+    path = format(GLOBAL_SHADER_PATH, resource_manager.folder);
+    if (!fs_exists(path) || fs_load(path, &global, &size).is_error)
         panic(result_error("AssetsCorruptError", "Global shader data is missing. Assets are corrupted."));
 
     char *osrs = source;
