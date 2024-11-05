@@ -33,14 +33,14 @@ void object_list_sort(object_list_t *list) {
     for (object_t *o_index = list->start; o_index != NULL; o_index = o_index->next) {
         object_t *object = calloc(1, sizeof(object_t));
         object->id = o_index->id;
-        object->depth = o_index->depth;
+        object->z = o_index->z;
 
         if (!new_start) {
             new_start = object;
             continue;
         }
 
-        if (object->depth > new_start->depth || (object->depth == new_start->depth && new_start->id > object->id)) {
+        if (object->z > new_start->z || (object->z == new_start->z && new_start->id > object->id)) {
             object->next = new_start;
             new_start = object;
             continue;
@@ -49,13 +49,13 @@ void object_list_sort(object_list_t *list) {
         object_t *head = new_start;
         while (true) {
             if (head->next) {
-                if (object->depth < head->next->depth) { // Traverse rightward
+                if (object->z < head->next->z) { // Traverse rightward
                     head = head->next;
                     continue;
                 }
 
-                if (head->next->depth == object->depth) { // Sort by ID
-                    while (head->next && head->next->id > object->id && object->next && object->next->depth == object->depth)
+                if (head->next->z == object->z) { // Sort by ID
+                    while (head->next && head->next->id > object->id && object->next && object->next->z == object->z)
                         head = head->next;
                     object->next = head->next;
                     head->next = object;
@@ -106,7 +106,7 @@ void object_manager_delete(object_manager_t *this) {
     free(this->buckets);
 }
 
-void object_manager_push(object_manager_t *this, const char *type, uint32_t id, float depth) {
+void object_manager_push(object_manager_t *this, const char *type, uint32_t id, float z) {
     object_list_t *list = object_manager_type(this, type);
     if (!list) { // Insert list
         list = calloc(1, sizeof(object_list_t));
@@ -117,7 +117,7 @@ void object_manager_push(object_manager_t *this, const char *type, uint32_t id, 
         this->list_count++;
         object_manager_rehash(this);
     }
-    object_list_insert(list, (object_t) { .id = id, .depth = depth });
+    object_list_insert(list, (object_t) { .id = id, .z = z });
     object_list_sort(list);
 }
 

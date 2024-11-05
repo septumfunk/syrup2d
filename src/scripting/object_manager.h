@@ -3,7 +3,7 @@
 
 typedef struct object_t {
     uint32_t id;
-    float depth;
+    float z;
     struct object_t *next;
 } object_t;
 
@@ -31,7 +31,7 @@ typedef struct object_manager_t {
 object_manager_t object_manager_create(void);
 void object_manager_delete(object_manager_t *this);
 
-void object_manager_push(object_manager_t *this, const char *type, uint32_t id, float depth);
+void object_manager_push(object_manager_t *this, const char *type, uint32_t id, float z);
 object_t *object_manager_get(object_manager_t *this, uint32_t id);
 object_t *object_manager_get_all(object_manager_t *this);
 void object_manager_remove(object_manager_t *this, uint32_t id);

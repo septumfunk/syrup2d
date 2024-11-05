@@ -124,7 +124,7 @@ result_t scene_load(const char *name, scene_t *out) {
     if (res.is_error)
         return res;
 
-    out->name = _strdup(head),
+    out->name = _strdup(head);
     out->instances = NULL;
     head += strlen(name) + 1;
 
@@ -164,13 +164,10 @@ result_t scene_save(scene_t *this, const char *name) {
     instances_flatten(this->instances, head);
 
     char *path = format(SCENE_PATH, resource_manager.folder, name);
-    result_t res;
-    if ((res = fs_save_checksum(path, buffer, size)).is_error) {
-        free(path);
-        return res;
-    }
+    result_t res = fs_save_checksum(path, buffer, size);
 
-    return result_no_error();
+    free(path);
+    return res;
 }
 
 void scene_spawn_instances(scene_t *this) {
@@ -196,4 +193,14 @@ void scene_add_instance(scene_t *this, const char *name, float x, float y, float
     else instance_seek_end(this->instances)->next = inst;
 }
 
-void scene_move_instance(scene_t *this, uint32_t index, float x, float y, float z);
+void scene_move_instance(scene_t *this, uint32_t index, float x, float y, float z) {
+    for (uint32_t i = 0; i < index; ++i) {
+        if (!this->instances)
+            return;
+        this->instances = this->instances->next;
+    }
+
+    this->instances->x = x;
+    this->instances->y = y;
+    this->instances->z = z;
+}

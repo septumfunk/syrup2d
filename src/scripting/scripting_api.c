@@ -29,10 +29,13 @@ void scripting_api_init(void) {
 void scripting_api_init_state(void) {
     scripting_api.state = luaL_newstate();
     luaL_openlibs(scripting_api.state);
+
+    char *path = format("package.path = package.path .. ';%s/scripts/?.lua;%s/.syrup/scripts/?.lua;%s/scripts/?/init.lua;%s/.syrup/scripts/?/init.lua'", resource_manager.folder, resource_manager.folder, resource_manager.folder, resource_manager.folder);
     luaL_dostring(
         scripting_api.state,
-        "package.path = package.path .. ';resources/scripts/?.lua;resources/engine/scripts/?.lua;resources/scripts/?/init.lua;resources/engine/scripts/?/init.lua'"
+        path
     );
+    free(path);
 }
 
 void scripting_api_init_globals(void) {
@@ -102,10 +105,10 @@ void scripting_api_update(void) {
             }
         } else lua_pop(scripting_api.state, 1);
 
-        lua_getfield(scripting_api.state, -1, "depth");
+        lua_getfield(scripting_api.state, -1, "z");
         if (lua_isnumber(scripting_api.state, -1)) {
             object_t *o = object_manager_get(&scripting_api.manager, object->id);
-            if (o) o->depth = lua_tonumber(scripting_api.state, -1);
+            if (o) o->z = lua_tonumber(scripting_api.state, -1);
         }
         lua_pop(scripting_api.state, 2);
     }
@@ -256,12 +259,12 @@ result_t scripting_api_push(const char *type, float x, float y) {
     while (object_manager_get(&scripting_api.manager, scripting_api.current_id))
         scripting_api.current_id++;
 
-    lua_getfield(scripting_api.state, -1, "depth");
+    lua_getfield(scripting_api.state, -1, "z");
     if (!lua_isnumber(scripting_api.state, -1)) {
         lua_pop(scripting_api.state, 1);
         lua_pushnumber(scripting_api.state, 0);
-        lua_setfield(scripting_api.state, -2, "depth");
-        lua_getfield(scripting_api.state, -1, "depth");
+        lua_setfield(scripting_api.state, -2, "z");
+        lua_getfield(scripting_api.state, -1, "z");
     }
 
     // Create Object

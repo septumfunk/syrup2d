@@ -12,10 +12,12 @@ typedef struct instance_t {
     struct instance_t *previous, *next;
 } instance_t;
 
+#pragma pack(push, 1)
 typedef struct instance_header_t {
     float version;
     uint32_t count;
 } instance_header_t;
+#pragma pack(pop)
 
 uint32_t instances_count(instance_t *instance);
 uint32_t instances_flattened_size(instance_t *instance);

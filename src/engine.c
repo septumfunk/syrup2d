@@ -21,8 +21,7 @@ void engine_start() {
     scripting_api_init();
 
     scene_t scene;
-    panic(scene_load("awesome", &scene));
-
+    panic(scene_load("BasicEditor", &scene));
     scene_spawn_instances(&scene);
 
     while (renderer_loop()) {
@@ -35,8 +34,6 @@ void engine_start() {
         keyboard_mouse_reset();
         renderer_swap();
     }
-
-    resource_manager_save_game_data("resources");
 }
 
 void engine_stop(void) {
