@@ -42,3 +42,23 @@ syrup.graphics.sprite_dimensions = function(name)end
 ---@param text string
 ---@param color table
 syrup.graphics.draw_text = function(name, x, y, text, color)end
+
+---[API] Get camera's current position from the top left of the viewport.
+---@return table position
+---@diagnostic disable-next-line: missing-return
+syrup.graphics.get_camera_position = function()end
+
+---[API] Set camera's position from the top left of the viewport.
+---@param x number
+---@param y number
+syrup.graphics.set_camera_position = function(x, y)end
+
+---[API] Get camera's current position from the center of the viewport.
+---@return table position
+---@diagnostic disable-next-line: missing-return
+syrup.graphics.get_camera_center = function()end
+
+---[API] Set camera's position from the center of the viewport.
+---@param x number
+---@param y number
+syrup.graphics.set_camera_center = function(x, y)end

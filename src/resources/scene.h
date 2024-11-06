@@ -6,7 +6,7 @@
 #define INSTANCES_VERSION 0.1f
 typedef struct instance_t {
     bool enabled;
-    char *object_name;
+    char *type;
     float x, y, z;
     char *creation_code;
     struct instance_t *previous, *next;
@@ -35,9 +35,12 @@ typedef struct scene_t {
 } scene_t;
 
 scene_t scene_create(const char *name);
+void scene_delete(scene_t *scene);
 result_t scene_load(const char *name, scene_t *out);
 result_t scene_save(scene_t *this, const char *name);
 
 void scene_spawn_instances(scene_t *this);
 void scene_add_instance(scene_t *this, const char *name, float x, float y, float z, const char *creation_code);
+void scene_delete_instance(scene_t *this, uint32_t index);
+void scene_set_instance_type(scene_t *this, uint32_t index, const char *type);
 void scene_move_instance(scene_t *this, uint32_t index, float x, float y, float z);

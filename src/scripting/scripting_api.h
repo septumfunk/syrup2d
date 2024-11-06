@@ -24,8 +24,8 @@ void scripting_api_update(void);
 void scripting_api_update_globals(void);
 void scripting_api_draw(void);
 
-result_t scripting_api_push(const char *type, float x, float y);
-result_t scripting_api_create(const char *type, float x, float y);
+result_t scripting_api_push(const char *type, float x, float y, float z, float enabled, const char *creation_code);
+result_t scripting_api_create(const char *type, float x, float y, float z, float enabled, const char *creation_code);
 void scripting_api_delete(uint32_t id);
 
 void scripting_api_copy_table(void);

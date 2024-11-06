@@ -18,6 +18,7 @@ typedef struct renderer_t {
     // Window
     GLFWwindow *window_handle;
     dimensions_t window_dimensions;
+    dimensions_t corrected_dimensions;
     double _last_time;
     double delta_time;
     double fps;
@@ -35,6 +36,7 @@ typedef struct renderer_t {
     // Camera
     bool gui;
     mat4 camera_matrix;
+    vec2 camera_position;
 } renderer_t;
 extern renderer_t renderer;
 
@@ -58,6 +60,7 @@ void renderer_uniform_vec3(const char *shader, const char *name, vec3 data);
 void renderer_uniform_vec4(const char *shader, const char *name, vec4 data);
 void renderer_uniform_mat4(const char *shader, const char *name, mat4 data);
 
+void renderer_set_camera_position(float x, float y);
 void renderer_set_camera_center(float x, float y);
 void renderer_set_clear_color(color_t color);
 

@@ -22,7 +22,8 @@ void resource_manager_init(bool garbage_collecter) {
     result_t res = resource_manager_load_game_data("resources");
     if (res.is_error) {
         result_discard(res);
-        panic(resource_manager_load_game_data("editor"));
+        res = resource_manager_load_game_data("editor");
+        panic(res);
     }
 }
 
@@ -101,7 +102,10 @@ void resource_manager_save_game_data(const char *folder) {
     head += sizeof(uint8_t);
 
     char *path = format("%s/game.syr", folder);
-    panic(fs_save_checksum(path, buffer, len));
+
+    result_t res = fs_save_checksum(path, buffer, len);
+    panic(res);
+
     free(path);
     free(buffer);
 }

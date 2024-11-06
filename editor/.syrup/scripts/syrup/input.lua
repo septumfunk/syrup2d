@@ -101,7 +101,6 @@ syrup.input.cursor = {
     pointer = 221188,
     beam = 221186,
     crosshair = 221187,
-    hand = 221188,
     hresize = 221189,
     vresize = 221190,
     nwseresize = 221191,

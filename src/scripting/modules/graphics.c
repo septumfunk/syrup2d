@@ -11,6 +11,11 @@ scripting_function_t api_graphics_functions[] = {
     { "draw_sprite_pro",  api_graphics_draw_sprite_pro },
     { "sprite_dimensions",  api_graphics_sprite_dimensions },
     { "draw_text", api_graphics_draw_text },
+
+    { "get_camera_position",  api_graphics_get_camera_position },
+    { "set_camera_position",  api_graphics_set_camera_position },
+    { "get_camera_center",  api_graphics_get_camera_center },
+    { "set_camera_center", api_graphics_set_camera_center },
 };
 
 __attribute__((constructor)) void api_graphics_init(void) {
@@ -121,5 +126,41 @@ int api_graphics_draw_text(lua_State *L) {
         .b = b,
         .a = a,
     });
+    return 0;
+}
+
+int api_graphics_get_camera_position(lua_State *L) {
+    lua_newtable(L);
+
+    lua_pushnumber(L, renderer.camera_position[0]);
+    lua_setfield(L, -2, "x");
+    lua_pushnumber(L, renderer.camera_position[1]);
+    lua_setfield(L, -2, "y");
+    lua_pushnumber(L, 0);
+    lua_setfield(L, -2, "z");
+
+    return 1;
+}
+
+int api_graphics_set_camera_position(lua_State *L) {
+    renderer_set_camera_position(luaL_checknumber(L, 1), luaL_checknumber(L, 2));
+    return 0;
+}
+
+int api_graphics_get_camera_center(lua_State *L) {
+    lua_newtable(L);
+
+    lua_pushnumber(L, renderer.camera_position[0] + renderer.corrected_dimensions.width / 2);
+    lua_setfield(L, -2, "x");
+    lua_pushnumber(L, renderer.camera_position[1] + renderer.corrected_dimensions.height / 2);
+    lua_setfield(L, -2, "y");
+    lua_pushnumber(L, 0);
+    lua_setfield(L, -2, "z");
+
+    return 1;
+}
+
+int api_graphics_set_camera_center(lua_State *L) {
+    renderer_set_camera_center(luaL_checknumber(L, 1), luaL_checknumber(L, 2));
     return 0;
 }

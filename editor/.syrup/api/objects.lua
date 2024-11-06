@@ -7,8 +7,11 @@ syrup.objects = {}
 ---@param type string
 ---@param x number
 ---@param y number
+---@param z number
+---@param enabled boolean
+---@param creation_code string
 ---@return table|nil object
-syrup.objects.new = function(type, x, y)end
+syrup.objects.new = function(type, x, y, z, enabled, creation_code)end
 
 ---[API] Delete an object using the engine's objects system.
 ---@param id integer

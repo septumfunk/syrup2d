@@ -20,7 +20,7 @@ uint32_t instances_flattened_size(instance_t *instance) {
     instance_t *head = instance = instance_seek_start(instance);
     uint32_t size = sizeof(instance_header_t); // Header
     while (head) {
-        size += strlen(head->object_name) + 1;
+        size += strlen(head->type) + 1;
         size += sizeof(float) * 3;
         if (head->creation_code)
             size += strlen(head->creation_code) + 1;
@@ -39,8 +39,8 @@ void instances_flatten(instance_t *instance, char *buffer) {
     buffer += sizeof(instance_header_t);
 
     while (head) {
-        strcpy(buffer, head->object_name);
-        buffer += strlen(head->object_name) + 1;
+        strcpy(buffer, head->type);
+        buffer += strlen(head->type) + 1;
 
         ((float *)buffer)[0] = head->x;
         ((float *)buffer)[1] = head->y;
@@ -112,6 +112,15 @@ scene_t scene_create(const char *name) {
     };
 }
 
+void scene_delete(scene_t *scene) {
+    instance_t *head = scene->instances = instance_seek_start(scene->instances);
+    while (head) {
+        scene->instances = head->next;
+        free(head);
+        head = scene->instances;
+    }
+}
+
 result_t scene_load(const char *name, scene_t *out) {
     char *path = format(SCENE_PATH, resource_manager.folder, name);
     if (!fs_exists(path))
@@ -174,7 +183,8 @@ void scene_spawn_instances(scene_t *this) {
     instance_t *head = this->instances = instance_seek_start(this->instances);
     while (head) {
         // TODO: Creation Code and z in scripting_api_push
-        panic(scripting_api_push(head->object_name, head->x, head->y));
+        result_t res = scripting_api_push(head->type, head->x, head->y, head->z, true, head->creation_code);
+        panic(res);
         head = head->next;
     }
 }
@@ -182,7 +192,7 @@ void scene_spawn_instances(scene_t *this) {
 void scene_add_instance(scene_t *this, const char *name, float x, float y, float z, const char *creation_code) {
     instance_t *inst = calloc(1, sizeof(instance_t));
     *inst = (instance_t) {
-        .object_name = _strdup(name),
+        .type = _strdup(name),
         .x = x,
         .y = y,
         .z = z,
@@ -193,7 +203,39 @@ void scene_add_instance(scene_t *this, const char *name, float x, float y, float
     else instance_seek_end(this->instances)->next = inst;
 }
 
+void scene_delete_instance(scene_t *this, uint32_t index) {
+    this->instances = instance_seek_start(this->instances);
+
+    for (uint32_t i = 0; i < index; ++i) {
+        if (!this->instances)
+            return;
+        this->instances = this->instances->next;
+    }
+
+    this->instances->previous->next = this->instances->next;
+    this->instances->next->previous = this->instances->previous;
+
+    instance_t *del = this->instances;
+    this->instances = instance_seek_start(this->instances);
+    free(del);
+}
+
+void scene_set_instance_type(scene_t *this, uint32_t index, const char *type) {
+    this->instances = instance_seek_start(this->instances);
+    for (uint32_t i = 0; i < index; ++i) {
+        if (!this->instances)
+            return;
+        this->instances = this->instances->next;
+    }
+
+    free(this->instances->type);
+    this->instances->type = _strdup(type);
+
+    this->instances = instance_seek_start(this->instances);
+}
+
 void scene_move_instance(scene_t *this, uint32_t index, float x, float y, float z) {
+    this->instances = instance_seek_start(this->instances);
     for (uint32_t i = 0; i < index; ++i) {
         if (!this->instances)
             return;
@@ -203,4 +245,6 @@ void scene_move_instance(scene_t *this, uint32_t index, float x, float y, float 
     this->instances->x = x;
     this->instances->y = y;
     this->instances->z = z;
+
+    this->instances = instance_seek_start(this->instances);
 }

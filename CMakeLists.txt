@@ -34,6 +34,7 @@ add_executable(${PROJECT_NAME}
     src/scripting/modules/objects.c
     src/scripting/modules/input.c
     src/scripting/modules/resources.c
+    src/scripting/modules/scenes.c
 
     src/structures/hashtable.c
     src/structures/result.c

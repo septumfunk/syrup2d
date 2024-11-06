@@ -82,7 +82,7 @@ void renderer_init_shaders(void) {
         glm_ortho(0, resource_manager.game_data.width, resource_manager.game_data.height, 0, -255, 255, renderer.projection);
     else
         glm_ortho(0, renderer.window_dimensions.width, renderer.window_dimensions.height, 0, -255, 255, renderer.projection);
-    renderer_set_camera_center(0, 0);
+    renderer_set_camera_position(0, 0);
     glGenBuffers(1, &renderer.global);
     glBindBuffer(GL_UNIFORM_BUFFER, renderer.global);
     glBufferData(GL_UNIFORM_BUFFER, sizeof(shader_global_t), NULL, GL_STATIC_DRAW);
@@ -157,6 +157,11 @@ bool renderer_loop(void) {
     renderer._last_time = glfwGetTime();
     renderer_update_buffer();
 
+    renderer.corrected_dimensions = (dimensions_t) {
+        .width = resource_manager.game_data.fixed_size ? resource_manager.game_data.width : renderer.window_dimensions.width,
+        .height = resource_manager.game_data.fixed_size ? resource_manager.game_data.height : renderer.window_dimensions.height,
+    };
+
     if (!resource_manager.game_data.fixed_size) {
         glClearColor(renderer.clear_color.r, renderer.clear_color.g, renderer.clear_color.b, renderer.clear_color.a);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -183,7 +188,8 @@ void renderer_bind(const char *name) {
     shader_t *shader;
     if ((shader = hashtable_get(&renderer.shader_table, (void *)name)) == NULL) {
         shader = calloc(1, sizeof(shader_t));
-        panic(shader_load(shader, name));
+        result_t res = shader_load(shader, name);
+        panic(res);
         shader_t *pshader = hashtable_insert(&renderer.shader_table, (void *)name, shader, sizeof(shader_t));
         free(shader);
         shader = pshader;
@@ -278,9 +284,20 @@ void renderer_uniform_mat4(const char *shader, const char *name, mat4 data) {
     glUniformMatrix4fv(location, 1, false, &data[0][0]);
 }
 
+void renderer_set_camera_position(float x, float y) {
+    glm_mat4_identity(renderer.camera_matrix);
+    glm_translate(renderer.camera_matrix, (vec3){-x, -y, 0});
+
+    renderer.camera_position[0] = x;
+    renderer.camera_position[1] = y;
+}
+
 void renderer_set_camera_center(float x, float y) {
     glm_mat4_identity(renderer.camera_matrix);
     glm_translate(renderer.camera_matrix, (vec3){-x + resource_manager.game_data.width / 2, -y + resource_manager.game_data.height / 2, 0});
+
+    renderer.camera_position[0] = x - resource_manager.game_data.width / 2;
+    renderer.camera_position[1] = y - resource_manager.game_data.height / 2;
 }
 
 int lua_camera_center(lua_State *L) {

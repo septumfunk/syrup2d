@@ -94,6 +94,13 @@ void scripting_api_update(void) {
             continue;
         }
 
+        lua_getfield(scripting_api.state, -1, "enabled");
+        if (!lua_isboolean(scripting_api.state, -1) || !lua_toboolean(scripting_api.state, -1)) {
+            lua_pop(scripting_api.state, 2);
+            continue;
+        }
+        lua_pop(scripting_api.state, 1);
+
         lua_getfield(scripting_api.state, -1, "update");
         if (lua_isfunction(scripting_api.state, -1)) {
             lua_pushvalue(scripting_api.state, -2);
@@ -139,9 +146,9 @@ void scripting_api_update_globals(void) {
     lua_pop(scripting_api.state, 1);
 
     lua_newtable(scripting_api.state);
-    lua_pushnumber(scripting_api.state, resource_manager.game_data.fixed_size ? resource_manager.game_data.width : renderer.window_dimensions.width);
+    lua_pushnumber(scripting_api.state, renderer.corrected_dimensions.width);
     lua_setfield(scripting_api.state, -2, "width");
-    lua_pushnumber(scripting_api.state, resource_manager.game_data.fixed_size ? resource_manager.game_data.height : renderer.window_dimensions.height);
+    lua_pushnumber(scripting_api.state, renderer.corrected_dimensions.height);
     lua_setfield(scripting_api.state, -2, "height");
     lua_setfield(scripting_api.state, -2, "dimensions");
 
@@ -162,6 +169,13 @@ void scripting_api_draw(void) {
             // TODO: Delete it
             continue;
         }
+
+        lua_getfield(scripting_api.state, -1, "enabled");
+        if (!lua_isboolean(scripting_api.state, -1) || !lua_toboolean(scripting_api.state, -1)) {
+            lua_pop(scripting_api.state, 2);
+            continue;
+        }
+        lua_pop(scripting_api.state, 1);
 
         lua_getfield(scripting_api.state, -1, "draw");
         if (lua_isfunction(scripting_api.state, -1)) {
@@ -204,7 +218,7 @@ void scripting_api_draw(void) {
     object_list_delete(&list);
 }
 
-result_t scripting_api_push(const char *type, float x, float y) {
+result_t scripting_api_push(const char *type, float x, float y, float z, float enabled, const char *creation_code) {
     hashtable_t inherited = hashtable_string();
     bool t = true;
     char *to_load = _strdup(type);
@@ -272,6 +286,8 @@ result_t scripting_api_push(const char *type, float x, float y) {
     object_t *object = object_manager_get(&scripting_api.manager, scripting_api.current_id++);
     lua_pop(scripting_api.state, 1);
 
+    lua_pushboolean(scripting_api.state, enabled);
+    lua_setfield(scripting_api.state, -2, "enabled");
     lua_pushnumber(scripting_api.state, object->id);
     lua_setfield(scripting_api.state, -2, "id");
     lua_pushstring(scripting_api.state, type);
@@ -302,21 +318,29 @@ result_t scripting_api_push(const char *type, float x, float y) {
     lua_setfield(scripting_api.state, -2, "base_clean_up");
 
     // Call start
-    lua_getfield(scripting_api.state, -1, "start");
-    if (!lua_isfunction(scripting_api.state, -1)) {
-        lua_pop(scripting_api.state, 1);
-        return result_no_error();
+    if (enabled) {
+        lua_getfield(scripting_api.state, -1, "start");
+        if (!lua_isfunction(scripting_api.state, -1)) {
+            lua_pop(scripting_api.state, 1);
+            return result_no_error();
+        }
+        lua_pushvalue(scripting_api.state, -2);
+        if (lua_pcall(scripting_api.state, 1, 0, 0) != 0) {
+            log_error(lua_tostring(scripting_api.state, -1));
+            lua_pop(scripting_api.state, 1);
+        }
+
+        if (luaL_dostring(scripting_api.state, creation_code) != LUA_OK) {
+            log_error(lua_tostring(scripting_api.state, -1));
+            lua_pop(scripting_api.state, 1);
+        }
     }
-    lua_pushvalue(scripting_api.state, -2);
-    if (lua_pcall(scripting_api.state, 1, 0, 0) != 0) {
-        log_error(lua_tostring(scripting_api.state, -1));
-        lua_pop(scripting_api.state, 1);
-    }
+
     return result_no_error();
 }
 
-result_t scripting_api_create(const char *type, float x, float y) {
-    result_t res = scripting_api_push(type, x, y);
+result_t scripting_api_create(const char *type, float x, float y, float z, float enabled, const char *creation_code) {
+    result_t res = scripting_api_push(type, x, y, z, enabled, creation_code);
     if (res.is_error)
         return res;
     lua_pop(scripting_api.state, 1);

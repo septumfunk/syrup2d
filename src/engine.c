@@ -21,7 +21,8 @@ void engine_start() {
     scripting_api_init();
 
     scene_t scene;
-    panic(scene_load("BasicEditor", &scene));
+    result_t res = scene_load("SceneEditorB1", &scene);
+    panic(res);
     scene_spawn_instances(&scene);
 
     while (renderer_loop()) {
