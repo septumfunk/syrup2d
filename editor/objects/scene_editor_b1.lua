@@ -4,6 +4,7 @@ return {
     instances = {},
 
     pan = nil,
+    cam = { x = 0, y = 0, z = 0 },
 
     start = function(self)
         self:load_instances()
@@ -11,6 +12,8 @@ return {
     end,
 
     update = function(self)
+        self.cam = syrup.graphics.get_camera_center()
+
         if syrup.input.is_mouse_button_pressed(syrup.input.mouse_button.middle) then
             syrup.input.set_cursor(syrup.input.cursor.crosshair)
             self.pan = {
@@ -46,5 +49,9 @@ return {
             self.instances[i] = syrup.objects.new("instance", inst.x, inst.y, inst.z, true, "")
             self.instances[i].child = syrup.objects.new(inst.type, 0, 0, 0, false, "")
         end
+    end,
+
+    draw_editor = function(self)
+        syrup.graphics.draw_sprite("scene_editor_icon", self.x, self.y, 0)
     end,
 }

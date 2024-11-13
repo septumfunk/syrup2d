@@ -2,6 +2,7 @@ require("syrup")
 
 return {
     child = nil,
+    selected = false,
 
     draw = function(self)
         if not self.child then

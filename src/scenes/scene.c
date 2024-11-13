@@ -3,6 +3,7 @@
 #include "../resources/resource_manager.h"
 #include "../scripting/scripting_api.h"
 #include "../util/stringext.h"
+#include <GLFW/glfw3.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -109,6 +110,10 @@ scene_t scene_create(const char *name) {
     return (scene_t) {
         .name = _strdup(name),
         .instances = NULL,
+
+        .current = false,
+        .active = true,
+        .last_accessed = glfwGetTime(),
     };
 }
 

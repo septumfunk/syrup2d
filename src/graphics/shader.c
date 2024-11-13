@@ -41,7 +41,7 @@ result_t load_shader_file(GLuint *out, int type, const char *name) {
     if (!success) {
         char log[512];
         glGetShaderInfoLog(*out, 512, NULL, log);
-        panic(result_error("Fatal OpenGL Error", format("Failed to compile shader \"%s.%s\"!\n%s", name, type == GL_VERTEX_SHADER ? "vert" : "frag", log)));
+        panic(result_error("Fatal OpenGL Error", format("Failed to compile shader '%s.%s'!\n%s", name, type == GL_VERTEX_SHADER ? "vert" : "frag", log)));
     }
 
     free(path);
@@ -67,7 +67,7 @@ result_t shader_load(shader_t *out, const char *name) {
     if (!success) {
         char log[512];
         glGetProgramInfoLog(out->program, 512, NULL, log);
-        panic(result_error("Fatal OpenGL Error", "Failed to link shader \"%s\"!\n%s", name, log));
+        panic(result_error("Fatal OpenGL Error", "Failed to link shader '%s'!\n%s", name, log));
     }
 
     // VAO & VBO

@@ -16,9 +16,16 @@
 renderer_t renderer;
 
 void renderer_init(void) {
+    log_header("Initializing Renderer");
     memset(&renderer, 0, sizeof(renderer_t));
+
+    log_info("Creating window...");
     renderer_init_window();
+    log_info("Dimensions: (%d, %d)", renderer.window_dimensions.width, renderer.window_dimensions.height);
+
     renderer_init_shaders();
+
+    log_info("Initializing Framebuffer...");
     renderer_init_framebuffer();
 }
 
@@ -31,9 +38,9 @@ void renderer_init_window(void) {
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
     if ((renderer.window_handle = glfwCreateWindow(
-        resource_manager.game_data.width * max(resource_manager.game_data.window_scale, 1),
-        resource_manager.game_data.height * max(resource_manager.game_data.window_scale, 1),
-        resource_manager.game_data.title, NULL, NULL)) == NULL)
+        resource_manager.metadata.width * max(resource_manager.metadata.window_scale, 1),
+        resource_manager.metadata.height * max(resource_manager.metadata.window_scale, 1),
+        resource_manager.metadata.title, NULL, NULL)) == NULL)
         panic(result_error("GLFWWindowError", "Failed to open GLFW window."));
 
     // Callbacks
@@ -51,10 +58,10 @@ void renderer_init_window(void) {
 
     glfwSetWindowSizeLimits(
         renderer.window_handle,
-        resource_manager.game_data.width,
-        resource_manager.game_data.height,
-        resource_manager.game_data.width * 8,
-        resource_manager.game_data.height * 8
+        resource_manager.metadata.width,
+        resource_manager.metadata.height,
+        resource_manager.metadata.width * 8,
+        resource_manager.metadata.height * 8
     );
 
     // Icon
@@ -67,19 +74,26 @@ void renderer_init_window(void) {
     glfwSetWindowIcon(renderer.window_handle, 1, &icon);
 
     // Ready
-    if (resource_manager.game_data.fixed_size)
-        glViewport(0, 0, resource_manager.game_data.width, resource_manager.game_data.height);
+    if (resource_manager.metadata.fixed_size)
+        glViewport(0, 0, resource_manager.metadata.width, resource_manager.metadata.height);
     else
         glViewport(0, 0, renderer.window_dimensions.width, renderer.window_dimensions.height);;
     glfwSwapInterval(1);
     glfwShowWindow(renderer.window_handle);
+
+    _renderer_framebuffer_resize_cb(renderer.window_handle, resource_manager.metadata.width * resource_manager.metadata.window_scale, resource_manager.metadata.height * resource_manager.metadata.window_scale);
+    renderer.corrected_dimensions = (dimensions_t) {
+        .width = resource_manager.metadata.fixed_size ? resource_manager.metadata.width : renderer.window_dimensions.width,
+        .height = resource_manager.metadata.fixed_size ? resource_manager.metadata.height : renderer.window_dimensions.height,
+    };
 }
 
 void renderer_init_shaders(void) {
     renderer.shader_table = hashtable_string();
 
-    if (resource_manager.game_data.fixed_size)
-        glm_ortho(0, resource_manager.game_data.width, resource_manager.game_data.height, 0, -255, 255, renderer.projection);
+    log_info("Initializing global buffer...");
+    if (resource_manager.metadata.fixed_size)
+        glm_ortho(0, resource_manager.metadata.width, resource_manager.metadata.height, 0, -255, 255, renderer.projection);
     else
         glm_ortho(0, renderer.window_dimensions.width, renderer.window_dimensions.height, 0, -255, 255, renderer.projection);
     renderer_set_camera_position(0, 0);
@@ -107,18 +121,18 @@ void renderer_init_shaders(void) {
 void renderer_init_framebuffer(void) {
     _renderer_framebuffer_resize_cb(
         renderer.window_handle,
-        resource_manager.game_data.width * resource_manager.game_data.window_scale,
-        resource_manager.game_data.height * resource_manager.game_data.window_scale
+        resource_manager.metadata.width * resource_manager.metadata.window_scale,
+        resource_manager.metadata.height * resource_manager.metadata.window_scale
     );
 
-    if (resource_manager.game_data.fixed_size) {
+    if (resource_manager.metadata.fixed_size) {
         glGenFramebuffers(1, &renderer.fbo);
         glGenTextures(2, &renderer.color_attachment);
         glBindFramebuffer(GL_FRAMEBUFFER, renderer.fbo);
-        glViewport(0, 0, resource_manager.game_data.width, resource_manager.game_data.height);
+        glViewport(0, 0, resource_manager.metadata.width, resource_manager.metadata.height);
 
         glBindTexture(GL_TEXTURE_2D, renderer.color_attachment);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, resource_manager.game_data.width, resource_manager.game_data.height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, resource_manager.metadata.width, resource_manager.metadata.height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderer.color_attachment, 0);
@@ -158,11 +172,11 @@ bool renderer_loop(void) {
     renderer_update_buffer();
 
     renderer.corrected_dimensions = (dimensions_t) {
-        .width = resource_manager.game_data.fixed_size ? resource_manager.game_data.width : renderer.window_dimensions.width,
-        .height = resource_manager.game_data.fixed_size ? resource_manager.game_data.height : renderer.window_dimensions.height,
+        .width = resource_manager.metadata.fixed_size ? resource_manager.metadata.width : renderer.window_dimensions.width,
+        .height = resource_manager.metadata.fixed_size ? resource_manager.metadata.height : renderer.window_dimensions.height,
     };
 
-    if (!resource_manager.game_data.fixed_size) {
+    if (!resource_manager.metadata.fixed_size) {
         glClearColor(renderer.clear_color.r, renderer.clear_color.g, renderer.clear_color.b, renderer.clear_color.a);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
@@ -171,7 +185,7 @@ bool renderer_loop(void) {
 }
 
 void renderer_swap(void) {
-    if (resource_manager.game_data.fixed_size)
+    if (resource_manager.metadata.fixed_size)
         renderer_draw_framebuffer();
     glfwSwapBuffers(renderer.window_handle);
     glfwPollEvents();
@@ -193,6 +207,7 @@ void renderer_bind(const char *name) {
         shader_t *pshader = hashtable_insert(&renderer.shader_table, (void *)name, shader, sizeof(shader_t));
         free(shader);
         shader = pshader;
+        log_info("Loaded shader '%s'.", name);
     }
 
     glUseProgram(shader->program);
@@ -213,7 +228,7 @@ void renderer_update_buffer(void) {
 
 void renderer_draw_framebuffer(void) {
     renderer_bind("framebuffer");
-    float framebuffer_aspect = (float)resource_manager.game_data.width / resource_manager.game_data.height;
+    float framebuffer_aspect = (float)resource_manager.metadata.width / resource_manager.metadata.height;
     float window_aspect = (float)renderer.window_dimensions.width / renderer.window_dimensions.height;
 
     int viewport_width, viewport_height;
@@ -238,7 +253,7 @@ void renderer_draw_framebuffer(void) {
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     glBindFramebuffer(GL_FRAMEBUFFER, renderer.fbo);
-    glViewport(0, 0, resource_manager.game_data.width, resource_manager.game_data.height);
+    glViewport(0, 0, resource_manager.metadata.width, resource_manager.metadata.height);
     glClearColor(renderer.clear_color.r, renderer.clear_color.g, renderer.clear_color.b, renderer.clear_color.a);
     glClear(GL_COLOR_BUFFER_BIT);
 }
@@ -294,15 +309,10 @@ void renderer_set_camera_position(float x, float y) {
 
 void renderer_set_camera_center(float x, float y) {
     glm_mat4_identity(renderer.camera_matrix);
-    glm_translate(renderer.camera_matrix, (vec3){-x + resource_manager.game_data.width / 2, -y + resource_manager.game_data.height / 2, 0});
+    glm_translate(renderer.camera_matrix, (vec3){-x + renderer.corrected_dimensions.width / 2, -y + renderer.corrected_dimensions.height / 2, 0});
 
-    renderer.camera_position[0] = x - resource_manager.game_data.width / 2;
-    renderer.camera_position[1] = y - resource_manager.game_data.height / 2;
-}
-
-int lua_camera_center(lua_State *L) {
-    renderer_set_camera_center(luaL_checknumber(L, 1), luaL_checknumber(L, 2));
-    return 0;
+    renderer.camera_position[0] = x - renderer.corrected_dimensions.width / 2;
+    renderer.camera_position[1] = y - renderer.corrected_dimensions.height / 2;
 }
 
 void renderer_set_clear_color(color_t color) {
@@ -316,17 +326,17 @@ void renderer_fbo_mouse_position(double *x, double *y) {
     *x = mx;
     *y = my;
 
-    if (resource_manager.game_data.fixed_size) {
-        double dx = (double)renderer.window_dimensions.width / resource_manager.game_data.width;
-        double dy = (double)renderer.window_dimensions.height / resource_manager.game_data.height;
+    if (resource_manager.metadata.fixed_size) {
+        double dx = (double)renderer.window_dimensions.width / resource_manager.metadata.width;
+        double dy = (double)renderer.window_dimensions.height / resource_manager.metadata.height;
         double aspect = dx / dy;
         *x = mx / dx;
         *y = my / dy;
 
         if (aspect > 1)
-            *x = (mx - (renderer.window_dimensions.width - dy * resource_manager.game_data.width) / 2) / dy;
+            *x = (mx - (renderer.window_dimensions.width - dy * resource_manager.metadata.width) / 2) / dy;
         if (aspect < 1)
-            *y = (my - (renderer.window_dimensions.height - dx * resource_manager.game_data.height) / 2) / dx;
+            *y = (my - (renderer.window_dimensions.height - dx * resource_manager.metadata.height) / 2) / dx;
     }
 }
 
@@ -371,8 +381,8 @@ void _renderer_framebuffer_resize_cb(unused GLFWwindow *handle, int width, int h
     renderer.window_dimensions.width = width;
     renderer.window_dimensions.height = height;
 
-    if (resource_manager.game_data.fixed_size) {
-        float framebuffer_aspect = (float)resource_manager.game_data.width / resource_manager.game_data.height;
+    if (resource_manager.metadata.fixed_size) {
+        float framebuffer_aspect = (float)resource_manager.metadata.width / resource_manager.metadata.height;
         float window_aspect = (float)width / height;
 
         int viewport_width, viewport_height;

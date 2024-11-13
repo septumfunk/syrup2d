@@ -54,6 +54,7 @@ void scripting_api_init_globals(void) {
 }
 
 void scripting_api_init_modules(void) {
+    log_header("Initializing Scripting Modules");
     lua_getglobal(scripting_api.state, "syrup");
     for (scripting_module_t *module = scripting_modules; module < scripting_modules + SCRIPTING_MODULES_COUNT; ++module) {
         if (!module->name || !module->functions)
@@ -151,6 +152,8 @@ void scripting_api_update_globals(void) {
     lua_pushnumber(scripting_api.state, renderer.corrected_dimensions.height);
     lua_setfield(scripting_api.state, -2, "height");
     lua_setfield(scripting_api.state, -2, "dimensions");
+
+    lua_pushstring(scripting_api.state, resource_manager.current_scene ? resource_manager.current_scene->name : "Unknown");
 
     lua_pop(scripting_api.state, 1);
 }
@@ -276,7 +279,7 @@ result_t scripting_api_push(const char *type, float x, float y, float z, float e
     lua_getfield(scripting_api.state, -1, "z");
     if (!lua_isnumber(scripting_api.state, -1)) {
         lua_pop(scripting_api.state, 1);
-        lua_pushnumber(scripting_api.state, 0);
+        lua_pushnumber(scripting_api.state, z);
         lua_setfield(scripting_api.state, -2, "z");
         lua_getfield(scripting_api.state, -1, "z");
     }

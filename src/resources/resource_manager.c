@@ -2,6 +2,7 @@
 #include "fs.h"
 #include "../util/stringext.h"
 #include "../util/log.h"
+#include "scene.h"
 #include "sprite.h"
 #include "cursor.h"
 #include <GLFW/glfw3.h>
@@ -13,18 +14,24 @@
 resource_manager_t resource_manager;
 
 void resource_manager_init(bool garbage_collecter) {
+    log_header("Initializing Resources");
     memset(&resource_manager, 0, sizeof(resource_manager_t));
     resource_manager.gc = garbage_collecter;
+    resource_manager.scene_table = hashtable_string();
     resource_manager.sprite_table = hashtable_string();
     resource_manager.cursor_table = hashtable_arbitrary(sizeof(mouse_cursors_e));
-    resource_manager.folder = NULL;
 
-    result_t res = resource_manager_load_game_data("resources");
+    resource_manager.folder = NULL;
+    resource_manager.current_scene = NULL;
+
+    result_t res = resource_manager_load_metadata("resources");
     if (res.is_error) {
         result_discard(res);
-        res = resource_manager_load_game_data("editor");
+        res = resource_manager_load_metadata("editor");
         panic(res);
-    }
+        log_info("Loaded Metadata 'editor/meta.sym'");
+        return;
+    } else log_info("Loaded Metadata 'resources/meta.sym'");
 }
 
 void resource_manager_cleanup(void) {
@@ -32,11 +39,11 @@ void resource_manager_cleanup(void) {
     hashtable_delete(&resource_manager.cursor_table);
 }
 
-result_t resource_manager_load_game_data(const char *folder) {
+result_t resource_manager_load_metadata(const char *folder) {
     free(resource_manager.folder);
     resource_manager.folder = _strdup(folder);
 
-    char *path = format(META_PATH, folder, folder);
+    char *path = format(META_PATH, folder);
     if (!fs_exists(path))
         return result_error("DataNotFoundErr", "The game's resources could not be located. Please verify the integrity of your copy of the game.");
 
@@ -52,22 +59,22 @@ result_t resource_manager_load_game_data(const char *folder) {
     char *head = buffer;
     int len;
 
-    memset(&resource_manager.game_data, 0, sizeof(resource_manager.game_data));
-    resource_manager.game_data.version = *(float *)head;
+    memset(&resource_manager.metadata, 0, sizeof(resource_manager.metadata));
+    resource_manager.metadata.version = *(float *)head;
     head += sizeof(float);
 
     len = strlen(head) + 1;
-    resource_manager.game_data.title = calloc(1, len);
-    strcpy(resource_manager.game_data.title, head);
+    resource_manager.metadata.title = calloc(1, len);
+    strcpy(resource_manager.metadata.title, head);
     head += len;
 
-    resource_manager.game_data.width = *(uint16_t *)head;
+    resource_manager.metadata.width = *(uint16_t *)head;
     head += sizeof(uint16_t);
 
-    resource_manager.game_data.height = *(uint16_t *)head;
+    resource_manager.metadata.height = *(uint16_t *)head;
     head += sizeof(uint16_t);
 
-    resource_manager.game_data.window_scale = *(uint8_t *)head;
+    resource_manager.metadata.window_scale = *(uint8_t *)head;
     head += sizeof(uint8_t);
 
     free(path);
@@ -76,13 +83,13 @@ result_t resource_manager_load_game_data(const char *folder) {
     return result_no_error();
 }
 
-void resource_manager_save_game_data(const char *folder) {
-    if (resource_manager.game_data.title == NULL)
+void resource_manager_save_metadata(const char *folder) {
+    if (resource_manager.metadata.title == NULL)
         return;
 
     int len =
       sizeof(float)
-    + strlen(resource_manager.game_data.title) + 1
+    + strlen(resource_manager.metadata.title) + 1
     + sizeof(uint16_t)
     + sizeof(uint16_t)
     + sizeof(uint8_t);
@@ -92,13 +99,13 @@ void resource_manager_save_game_data(const char *folder) {
 
     *(float *)head = META_VERSION;
     head += sizeof(float);
-    strcpy(head, resource_manager.game_data.title);
-    head += strlen(resource_manager.game_data.title) + 1;
-    *(uint16_t *)head = resource_manager.game_data.width;
+    strcpy(head, resource_manager.metadata.title);
+    head += strlen(resource_manager.metadata.title) + 1;
+    *(uint16_t *)head = resource_manager.metadata.width;
     head += sizeof(uint16_t);
-    *(uint16_t *)head = resource_manager.game_data.height;
+    *(uint16_t *)head = resource_manager.metadata.height;
     head += sizeof(uint16_t);
-    *(uint8_t *)head = resource_manager.game_data.window_scale;
+    *(uint8_t *)head = resource_manager.metadata.window_scale;
     head += sizeof(uint8_t);
 
     char *path = format("%s/game.syr", folder);
@@ -108,6 +115,26 @@ void resource_manager_save_game_data(const char *folder) {
 
     free(path);
     free(buffer);
+}
+
+scene_t *resource_manager_scene(const char *name) {
+    scene_t *scn;
+    if ((scn = hashtable_get(&resource_manager.scene_table, (void *)name)) == NULL) {
+        scn = calloc(1, sizeof(scene_t));
+        // Attempt to load scene
+        result_t res;
+        if ((res = scene_load(name, scn)).is_error) {
+            log_info(res.description);
+            result_discard(res);
+        } else log_info("Loaded sprite '%s'.", name);
+
+        scene_t *pscn = hashtable_insert(&resource_manager.scene_table, (void *)name, scn, sizeof(scene_t));
+        free(scn);
+        scn = pscn;
+    }
+    scn->last_accessed = glfwGetTime();
+
+    return scn;
 }
 
 sprite_t *resource_manager_sprite(const char *name) {
@@ -120,7 +147,7 @@ sprite_t *resource_manager_sprite(const char *name) {
             log_info(res.description);
             result_discard(res);
             if (sprite_load(spr, "default").is_error)
-                panic(result_error("Fatal Error", "Sprite manager is unable to load default sprite. Are your assets corrupt?"));
+                panic(result_error("Fatal Error", "Resource manager is unable to load default sprite. Are your assets corrupt?"));
         } else
             log_info("Loaded sprite '%s'.", name);
 
@@ -168,10 +195,25 @@ GLFWcursor *resource_manager_cursor(mouse_cursors_e cursor) {
 }
 
 void resource_manager_clean(void) {
-    if (!resource_manager.gc || resource_manager.sprite_table.pair_count == 0)
+    if (!resource_manager.gc || (resource_manager.sprite_table.pair_count == 0 && resource_manager.scene_table.pair_count == 0))
         return;
+
+    // Clean Scenes
     uint32_t count = 0;
-    pair_t **pairs = hashtable_pairs(&resource_manager.sprite_table, &count);
+    pair_t **pairs = hashtable_pairs(&resource_manager.scene_table, &count);
+    for (pair_t **pair = pairs; pair < pairs + count; ++pair) {
+        scene_t *scn = (scene_t *)(*pair)->value;
+        if (scn->active && resource_manager.current_scene != scn && glfwGetTime() - scn->last_accessed >= SCENE_DECAY_TIME) {
+            scene_delete(scn);
+            log_info("Unloaded scene '%s'.", (*pair)->key);
+            hashtable_remove(&resource_manager.scene_table, (*pair)->key);
+        }
+    }
+    free(pairs);
+
+    // Clean Sprites
+    count = 0;
+    pairs = hashtable_pairs(&resource_manager.sprite_table, &count);
     for (pair_t **pair = pairs; pair < pairs + count; ++pair) {
         sprite_t *spr = (sprite_t *)(*pair)->value;
         if (glfwGetTime() - spr->last_drawn >= SPRITE_DECAY_TIME) {

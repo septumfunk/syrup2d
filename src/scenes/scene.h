@@ -29,9 +29,14 @@ instance_t *instance_seek_end(instance_t *instance);
 
 #define SCENE_PATH "%s/scenes/%s.syc"
 #define SCENE_VERSION 0.1f
+#define SCENE_DECAY_TIME 30
 typedef struct scene_t {
     char *name;
     instance_t *instances;
+
+    bool current;
+    bool active;
+    float last_accessed;
 } scene_t;
 
 scene_t scene_create(const char *name);

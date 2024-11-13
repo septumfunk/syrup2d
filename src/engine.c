@@ -5,6 +5,7 @@
 #include "resources/resource_manager.h"
 #include "resources/scene.h"
 #include "scripting/scripting_api.h"
+#include "util/log.h"
 #include <GLFW/glfw3.h>
 #include <lauxlib.h>
 #include <lua.h>
@@ -20,10 +21,10 @@ void engine_start() {
     keyboard_mouse_init();
     scripting_api_init();
 
-    scene_t scene;
-    result_t res = scene_load("SceneEditorB1", &scene);
-    panic(res);
-    scene_spawn_instances(&scene);
+    log_header("Starting Game '%s'", resource_manager.metadata.title);
+
+    scene_t *scene = resource_manager_scene("SceneEditorB1");
+    scene_spawn_instances(scene);
 
     while (renderer_loop()) {
         // Update
