@@ -2,8 +2,8 @@
 #include "object_manager.h"
 #include "modules/modules.h"
 #include "../resources/fs.h"
-#include "../resources/resource_manager.h"
 #include "../graphics/renderer.h"
+#include "../resources/resource_manager.h"
 #include "../util/log.h"
 #include "../util/stringext.h"
 #include <lauxlib.h>
@@ -91,7 +91,7 @@ void scripting_api_update(void) {
 
         if (!lua_istable(scripting_api.state, -1)) {
             lua_pop(scripting_api.state, 1);
-            // TODO: Delete it
+            scripting_api_delete(object->id);
             continue;
         }
 
